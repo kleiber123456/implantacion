@@ -32,7 +32,7 @@ const AuthService = {
 
       // Insertar en 
       const [usuarioResult] = await connection.query(
-        'INSERT INTO Usuario (Nombre,  apellido, Correo, Password, rol_id ) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO usuario (Nombre,  apellido, Correo, Password, rol_id ) VALUES (?, ?, ?, ?, ?)',
         [data.nombre, data.apellido, data.correo, hashed, rol]
       );
 
