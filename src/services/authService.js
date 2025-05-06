@@ -29,19 +29,46 @@ const AuthService = {
     try {
       const hashed = await bcrypt.hash(data.password, 10);
       const rol = data.rol_id || 4;
-
-      // Insertar en 
+  
+      // Insertar en usuario con teléfono y dirección
       const [usuarioResult] = await connection.query(
-        'INSERT INTO Usuario (Nombre,  apellido, Correo, Password, rol_id ) VALUES (?, ?, ?, ?, ?)',
-        [data.nombre, data.apellido, data.correo, hashed, rol]
+        'INSERT INTO usuario (Nombre, apellido, Correo, Password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [data.nombre, data.apellido, data.correo, hashed, rol, data.telefono, data.direccion]
       );
 
-
-      // Enviar correo
+      // Enviar correo de bienvenida mejorado
       await transporter.sendMail({
         to: data.correo,
-        subject: 'Bienvenido a MotOrtega',
-        html: `<h3>Hola ${data.nombre}</h3><p>Tu registro fue exitoso.</p>`
+        subject: `¡Bienvenido a la comunidad MotOrtega, ${data.nombre}! 🚀`,
+        html: `
+          <div style="background-color: #f9fafc; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
+            <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); overflow: hidden;">
+              <div style="background-color: #1f2937; padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0;">MotOrtega</h1>
+              </div>
+              <div style="padding: 30px;">
+                <h2 style="color: #111827;">¡Hola, ${data.nombre} ${data.apellido}!</h2>
+                <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                  Estamos encantados de darte la bienvenida a <strong>MotOrtega</strong>. 🎉 Tu registro ha sido exitoso.
+                </p>
+                <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
+                  Explora nuestra plataforma y descubre todo lo que tenemos para ofrecerte. ¡Estamos emocionados de tenerte a bordo!
+                </p>
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="[ENLACE A TU PLATAFORMA]" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                    Explorar MotOrtega
+                  </a>
+                </div>
+                <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                  Si tienes alguna pregunta, no dudes en visitar nuestra <a href="[ENLACE A TU SECCIÓN DE AYUDA]" style="color: #2563eb;">sección de ayuda</a>.
+                </p>
+              </div>
+              <div style="background-color: #f3f4f6; text-align: center; padding: 20px;">
+                <p style="color: #9ca3af; font-size: 12px; margin: 0;">MotOrtega © ${new Date().getFullYear()} | Todos los derechos reservados</p>
+              </div>
+            </div>
+          </div>
+        `
       });
 
       await connection.commit();
@@ -65,10 +92,40 @@ const AuthService = {
       [correo, codigo, expiresAt]
     );
 
+    // Enviar correo de recuperación de contraseña mejorado
     await transporter.sendMail({
       to: correo,
-      subject: 'Código de recuperación de contraseña',
-      html: `<p>Tu código de recuperación es: <strong>${codigo}</strong>. Expira en 10 minutos.</p>`
+      subject: '🔑 Solicitud de recuperación de contraseña para MotOrtega',
+      html: `
+        <div style="background-color: #f9fafc; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
+          <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); overflow: hidden;">
+            <div style="background-color: #1f2937; padding: 20px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0;">MotOrtega</h1>
+            </div>
+            <div style="padding: 30px;">
+              <h2 style="color: #111827;">Código de recuperación de contraseña</h2>
+              <p style="color: #4b5563; font-size: 16px;">
+                Has solicitado recuperar la contraseña de tu cuenta en <strong>MotOrtega</strong>. Utiliza el siguiente código de verificación.
+              </p>
+              <p style="color: #4b5563; font-size: 16px;">
+                Por favor, introduce este código en la pantalla de recuperación de contraseña. Recuerda que este código es válido por solo <strong>10 minutos</strong>.
+              </p>
+              <div style="font-size: 32px; font-weight: bold; text-align: center; margin: 20px 0; color: #2563eb;">
+                ${codigo}
+              </div>
+              <p style="color: #dc2626; font-size: 14px;">
+                Si no solicitaste este cambio de contraseña, por favor ignora este correo. Tu cuenta permanece segura.
+              </p>
+              <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
+                Si tienes algún problema o no solicitaste esta recuperación, contacta a nuestro equipo de soporte a través de <a href="mailto:[TU CORREO DE SOPORTE]" style="color: #2563eb;">[tu correo de soporte]</a>.
+              </p>
+            </div>
+            <div style="background-color: #f3f4f6; text-align: center; padding: 20px;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">MotOrtega © ${new Date().getFullYear()} | Todos los derechos reservados</p>
+            </div>
+          </div>
+        </div>
+      `
     });
   },
 

@@ -8,8 +8,11 @@ const UsuarioModel = {
   },
 
   async create(usuario) {
-    const { nombre, apellido, correo, password, Rol_id } = usuario;
-    await db.query('INSERT INTO usuario (nombre, apellido, correo, password, Rol_id) VALUES (?, ?, ?, ?, ?)', [nombre, apellido, correo, password, Rol_id]);
+    const { nombre, apellido, correo, password, Rol_id, telefono, direccion } = usuario;
+    await db.query(
+      'INSERT INTO usuario (nombre, apellido, correo, password, Rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [nombre, apellido, correo, password, Rol_id, telefono, direccion]
+    );
   },
 
   async updatePassword(id, password) {
@@ -23,4 +26,5 @@ const UsuarioModel = {
 };
 
 module.exports = UsuarioModel;
+
 
