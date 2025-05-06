@@ -32,8 +32,13 @@ const AuthService = {
   
       // Insertar en usuario con teléfono y dirección
       const [usuarioResult] = await connection.query(
+<<<<<<< HEAD
         'INSERT INTO usuario (Nombre, apellido, Correo, Password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [data.nombre, data.apellido, data.correo, hashed, rol, data.telefono, data.direccion]
+=======
+        'INSERT INTO usuario (Nombre,  apellido, Correo, Password, rol_id ) VALUES (?, ?, ?, ?, ?)',
+        [data.nombre, data.apellido, data.correo, hashed, rol]
+>>>>>>> e6eb8ab99a232a7ca1b446b9d37f1d7f1a393fc7
       );
 
       // Enviar correo de bienvenida mejorado
