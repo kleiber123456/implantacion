@@ -15,11 +15,11 @@ const AuthService = {
       throw new Error('Credenciales inválidas');
     }
     const token = jwt.sign(
-      { id: usuario.id, rol: usuario.Rol_id },
+      { id: usuario.id, rol: usuario.rol_id },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
-    return { token, usuario };
+    return { token: `Bearer ${token}`, usuario };
   },
 
   async register(data) {
@@ -28,13 +28,56 @@ const AuthService = {
 
     try {
       const hashed = await bcrypt.hash(data.password, 10);
-      const rol = data.rol_id || 4;
+      const rol = data.rol_id || 4; // Valor predeterminado: 4
   
       // Insertar en usuario con teléfono y dirección
       const [usuarioResult] = await connection.query(
-        'INSERT INTO usuario (Nombre, apellido, Correo, Password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [data.nombre, data.apellido, data.correo, hashed, rol, data.telefono, data.direccion]
+        'INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [data.nombre, data.apellido, data.correo, data.tipo_documento, data.documento, hashed, rol, data.telefono, data.direccion]
       );
+      
+      const usuarioId = usuarioResult.insertId;
+      
+      // Si el rol es de cliente (asumiendo que el ID de rol cliente es 2)
+      if (rol === 4) {
+        await connection.query(
+          'INSERT INTO cliente (nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [data.nombre, data.apellido, data.direccion, data.tipo_documento, data.documento, data.correo, data.telefono, 'Activo']
+        );
+      }
+      
+      // Si el rol es de mecánico (asumiendo que el ID de rol mecánico es 3)
+      if (rol === 3) {
+        // Para mecánicos, necesitamos un horario_id, se puede crear uno predeterminado o solicitar en el registro
+        let horarioId;
+        
+        if (data.horario_id) {
+          // Si se proporciona un horario_id
+          horarioId = data.horario_id;
+        } else {
+          // Crear un horario predeterminado
+          const [horarioResult] = await connection.query(
+            'INSERT INTO horario (fecha, hora_inicio, hora_fin) VALUES (CURDATE(), "08:00:00", "17:00:00")',
+            []
+          );
+          horarioId = horarioResult.insertId;
+        }
+        
+        await connection.query(
+          'INSERT INTO mecanico (nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            data.nombre, 
+            data.apellido, 
+            data.tipo_documento, 
+            data.documento, 
+            data.direccion, 
+            data.telefono, 
+            data.telefono_emergencia || data.telefono, // Si no hay teléfono de emergencia, usar el principal
+            'Activo',
+            horarioId
+          ]
+        );
+      }
 
       // Enviar correo de bienvenida mejorado
       await transporter.sendMail({
@@ -117,7 +160,7 @@ const AuthService = {
                 Si no solicitaste este cambio de contraseña, por favor ignora este correo. Tu cuenta permanece segura.
               </p>
               <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-                Si tienes algún problema o no solicitaste esta recuperación, contacta a nuestro equipo de soporte a través de <a href="mailto:[TU CORREO DE SOPORTE]" style="color: #2563eb;">[tu correo de soporte]</a>.
+                Si tienes algún problema o no solicitaste esta recuperación, contacta a nuestro equipo de soporte a través de <a href="mailto:[soportemotortega@gmail.com]" style="color: #2563eb;">[soportemotortega@gmail.com]</a>.
               </p>
             </div>
             <div style="background-color: #f3f4f6; text-align: center; padding: 20px;">
