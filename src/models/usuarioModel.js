@@ -17,8 +17,13 @@ const UsuarioModel = {
   },
 
   async findByEmail(correo) {
-    const [rows] = await db.query('SELECT * FROM usuario WHERE correo = ?', [correo]);
-    return rows[0];
+  const [rows] = await db.query(`
+    SELECT u.*, r.nombre AS rol
+    FROM usuario u
+    JOIN rol r ON u.rol_id = r.id
+    WHERE u.correo = ?
+  `, [correo]);
+  return rows[0];
   },
 
   async create(usuario) {

@@ -41,8 +41,8 @@ const AuthService = {
       // Si el rol es de cliente (asumiendo que el ID de rol cliente es 2)
       if (rol === 4) {
         await connection.query(
-          'INSERT INTO cliente (nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          [data.nombre, data.apellido, data.direccion, data.tipo_documento, data.documento, data.correo, data.telefono, 'Activo']
+          'INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [usuarioId, data.nombre, data.apellido, data.direccion, data.tipo_documento, data.documento, data.correo, data.telefono, 'Activo']
         );
       }
       
@@ -64,8 +64,9 @@ const AuthService = {
         }
         
         await connection.query(
-          'INSERT INTO mecanico (nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
+            usuarioId,
             data.nombre, 
             data.apellido, 
             data.tipo_documento, 
