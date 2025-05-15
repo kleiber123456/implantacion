@@ -21,21 +21,17 @@ app.get('/', (req, res) => {
     res.json({
         message: 'Bienvenido a la API del Taller MotOrtega',
         endpoints: {
-
             roles: '/api/roles',
             usuarios: '/api/usuarios',
             login: '/api/auth/login (POST)',
-            Register: '/api/auth/register (POST)',
-            Enviarcodigo: '/api/usuarios/solicitar-codigo (POST)',
-            verificarcodigo: '/api/usuarios/verificar-codigo (POST)',
-            Actulizarpasword: '/api/usuarios/nueva-password (POST)',
-            
-
-
+            register: '/api/auth/register (POST)',
+            miPerfil: '/api/usuarios/mi-perfil (GET/PUT)',
+            enviarCodigo: '/api/auth/solicitar-codigo (POST)',
+            verificarCodigo: '/api/auth/verificar-codigo (POST)',
+            actualizarPassword: '/api/auth/nueva-password (POST)',
         }
     });
 });
 
 module.exports = app;
-
 

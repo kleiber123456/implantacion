@@ -36,14 +36,86 @@ const UsuarioModel = {
   },
 
   async update(id, usuario) {
-    const { nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id } = usuario;
-    await db.query(
-      `UPDATE usuario SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ?, rol_id = ? WHERE id = ?`,
-      [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id]
-    );
+    const connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    try {
+      const { nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id } = usuario;
+      
+      // Obtener información de rol actual
+      const [userData] = await connection.query('SELECT rol_id FROM usuario WHERE id = ?', [id]);
+      const rolActual = userData[0]?.rol_id;
+      
+      // Actualizar usuario
+      await connection.query(
+        `UPDATE usuario SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ?, rol_id = ? WHERE id = ?`,
+        [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id]
+      );
+      
+      // Si cambió de rol o actualizó información en el mismo rol
+      if (rolActual === 2 && rol_id === 2) {
+        // Actualizar cliente directamente (aunque ya existe trigger)
+        await connection.query(
+          `UPDATE cliente SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
+          [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id]
+        );
+      } else if (rolActual === 3 && rol_id === 3) {
+        // Actualizar mecánico directamente (aunque ya existe trigger)
+        await connection.query(
+          `UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
+          [nombre, apellido, tipo_documento, documento, telefono, direccion, estado, id]
+        );
+      } else if (rolActual !== rol_id) {
+        // Si cambió de rol, verificar si necesitamos crear un nuevo registro
+        // De cliente a otro rol: no es necesario eliminar, CASCADE lo hará
+        // De mecánico a otro rol: no es necesario eliminar, CASCADE lo hará
+        
+        // Si el nuevo rol es cliente, crear un nuevo cliente
+        if (rol_id === 2) {
+          await connection.query(
+            `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE 
+             nombre = VALUES(nombre), apellido = VALUES(apellido), direccion = VALUES(direccion),
+             tipo_documento = VALUES(tipo_documento), documento = VALUES(documento), correo = VALUES(correo),
+             telefono = VALUES(telefono), estado = VALUES(estado)`,
+            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado]
+          );
+        }
+        
+        // Si el nuevo rol es mecánico, crear un nuevo mecánico
+        if (rol_id === 3) {
+          // Para mecánicos, necesitamos un horario_id
+          const [horarioResult] = await connection.query(
+            'INSERT INTO horario (fecha, hora_inicio, hora_fin) VALUES (CURDATE(), "08:00:00", "17:00:00")',
+            []
+          );
+          const horarioId = horarioResult.insertId;
+          
+          await connection.query(
+            `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE 
+             nombre = VALUES(nombre), apellido = VALUES(apellido), tipo_documento = VALUES(tipo_documento),
+             documento = VALUES(documento), direccion = VALUES(direccion), telefono = VALUES(telefono),
+             telefono_emergencia = VALUES(telefono_emergencia), estado = VALUES(estado)`,
+            [id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono, estado, horarioId]
+          );
+        }
+      }
+      
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   },
 
   async delete(id) {
+    // No es necesario eliminar explícitamente de cliente o mecánico
+    // porque se configuró ON DELETE CASCADE en las relaciones
     await db.query('DELETE FROM usuario WHERE id = ?', [id]);
   },
 
