@@ -19,7 +19,7 @@ const AuthService = {
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
-    return { token: `Bearer ${token}`, usuario };
+    return { token: `${token}`, usuario };
   },
 
   async register(data) {
