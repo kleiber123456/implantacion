@@ -29,6 +29,7 @@ app.get('/', (req, res) => {
             enviarCodigo: '/api/auth/solicitar-codigo (POST)',
             verificarCodigo: '/api/auth/verificar-codigo (POST)',
             actualizarPassword: '/api/auth/nueva-password (POST)',
+            cambiarEstadoUsuario: '/api/usuarios/:id/cambiar-estado (PUT)',
         }
     });
 });

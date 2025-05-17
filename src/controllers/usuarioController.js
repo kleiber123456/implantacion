@@ -61,7 +61,19 @@ const UsuarioController = {
     } catch (error) {
       res.status(500).json({ error: 'Error al actualizar el perfil' });
     }
+  },
+
+  async cambiarEstado(req, res) {
+    try {
+      const id = req.params.id;
+      const nuevoEstado = await UsuarioService.cambiarEstado(id);
+      res.json({ message: `Estado actualizado a ${nuevoEstado}` });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al cambiar el estado del usuario' });
+    }
   }
 };
+
 
 module.exports = UsuarioController;

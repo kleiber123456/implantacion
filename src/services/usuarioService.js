@@ -102,7 +102,15 @@ const UsuarioService = {
   },
 
   actualizar: (id, data) => UsuarioModel.update(id, data),
-  eliminar: (id) => UsuarioModel.delete(id)
+  eliminar: (id) => UsuarioModel.delete(id),
+
+  cambiarEstado: async (id) => {
+    const usuario = await UsuarioModel.findById(id);
+    if (!usuario) throw new Error('Usuario no encontrado');
+    const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo';
+    await UsuarioModel.cambiarEstado(id, nuevoEstado);
+    return nuevoEstado;
+  }
 };
 
 module.exports = UsuarioService;

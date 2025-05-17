@@ -9,6 +9,9 @@ const { verifyToken, authorizeRoles } = require('../middlewares/authMiddleware')
 router.get('/mi-perfil', verifyToken, UsuarioController.miPerfil);
 router.put('/mi-perfil', verifyToken, UsuarioController.actualizarMiPerfil);
 
+// Cambio de estado
+router.put('/:id/cambiar-estado', verifyToken, authorizeRoles(1), UsuarioController.cambiarEstado);
+
 // Rutas de administración (requieren permisos específicos)
 router.get('/', verifyToken, UsuarioController.listar);
 router.get('/:id', verifyToken, UsuarioController.obtener);
