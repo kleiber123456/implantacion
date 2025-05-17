@@ -4,6 +4,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const usuarioRoutes = require('./routes/usuarioRoutes');
 const rolRoutes = require('./routes/rolRoutes');
+const proveedorRoutes = require('./routes/proveedorRoutes');
 
 
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/roles', rolRoutes);
+app.use('/api/proveedores', proveedorRoutes);
 
 
 app.get('/', (req, res) => {
@@ -30,6 +32,9 @@ app.get('/', (req, res) => {
             verificarCodigo: '/api/auth/verificar-codigo (POST)',
             actualizarPassword: '/api/auth/nueva-password (POST)',
             cambiarEstadoUsuario: '/api/usuarios/:id/cambiar-estado (PUT)',
+            cambiarEstadoProveedor: '/api/proveedores/:id/cambiar-estado (PUT)',
+            proveedores: '/api/proveedores',
+            
         }
     });
 });
