@@ -8,6 +8,7 @@ const rolRoutes = require('./routes/rolRoutes');
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 const repuestoRoutes = require('./routes/repuestoRoutes');
+const categoriaRepuestoRoutes = require('./routes/categoriaRepuestoRoutes');
 
 
 const app = express();
@@ -22,6 +23,7 @@ app.use('/api/roles', rolRoutes);
 app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/servicios', servicioRoutes);
 app.use('/api/repuestos', repuestoRoutes);
+app.use('/api/categorias-repuestos', categoriaRepuestoRoutes);
 
 
 
@@ -41,12 +43,15 @@ app.get('/', (req, res) => {
             cambiarEstadoUsuario: '/api/usuarios/:id/cambiar-estado (PUT)',
             cambiarEstadoProveedor: '/api/proveedores/:id/cambiar-estado (PUT)',
             cambiarEstadoServicio: '/api/servicios/:id/cambiar-estado (PUT)',
+            cambiarEstadoRepuesto: '/api/repuestos/:id/cambiar-estado (PUT)',
+            cambiarEstadoCategoriaRepuesto: '/api/categorias-repuestos/:id/cambiar-estado (PUT)',
 
             proveedores: '/api/proveedores',
             servicios: '/api/servicios',
             roles: '/api/roles',
             usuarios: '/api/usuarios',
             repuestos: '/api/repuestos',
+            categoriasRepuestos: '/api/categorias-repuestos',
             
             
         }
