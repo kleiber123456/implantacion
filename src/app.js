@@ -7,6 +7,7 @@ const usuarioRoutes = require('./routes/usuarioRoutes');
 const rolRoutes = require('./routes/rolRoutes');
 const proveedorRoutes = require('./routes/proveedorRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
+const repuestoRoutes = require('./routes/repuestoRoutes');
 
 
 const app = express();
@@ -20,6 +21,7 @@ app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/roles', rolRoutes);
 app.use('/api/proveedores', proveedorRoutes);
 app.use('/api/servicios', servicioRoutes);
+app.use('/api/repuestos', repuestoRoutes);
 
 
 
@@ -35,7 +37,7 @@ app.get('/', (req, res) => {
 
             miPerfil: '/api/usuarios/mi-perfil (GET/PUT)',
 
-//-----------------------------------------------------------------------------
+
             cambiarEstadoUsuario: '/api/usuarios/:id/cambiar-estado (PUT)',
             cambiarEstadoProveedor: '/api/proveedores/:id/cambiar-estado (PUT)',
             cambiarEstadoServicio: '/api/servicios/:id/cambiar-estado (PUT)',
@@ -43,7 +45,8 @@ app.get('/', (req, res) => {
             proveedores: '/api/proveedores',
             servicios: '/api/servicios',
             roles: '/api/roles',
-            usuarios: '/api/usuarios'
+            usuarios: '/api/usuarios',
+            repuestos: '/api/repuestos',
             
             
         }
