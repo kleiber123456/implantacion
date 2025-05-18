@@ -1,4 +1,6 @@
 // src/models/categoriaRepuestoModel.js
+const db = require('../config/db');
+
 const CategoriaRepuestoModel = {
   findAll: async () => {
     const [rows] = await db.query('SELECT * FROM categoria_repuesto');
