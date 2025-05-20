@@ -1,4 +1,6 @@
 // src/models/repuestoModel.js
+const db = require('../config/db');
+
 const RepuestoModel = {
   findAll: async () => {
     const [rows] = await db.query(
