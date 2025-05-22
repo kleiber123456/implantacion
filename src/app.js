@@ -9,6 +9,7 @@ const proveedorRoutes = require('./routes/proveedorRoutes');
 const servicioRoutes = require('./routes/servicioRoutes');
 const repuestoRoutes = require('./routes/repuestoRoutes');
 const categoriaRepuestoRoutes = require('./routes/categoriaRepuestoRoutes');
+const { cambiarEstado } = require('./models/proveedorModel');
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.get('/', (req, res) => {
             cambiarEstadoServicio: '/api/servicios/:id/cambiar-estado (PUT)',
             cambiarEstadoRepuesto: '/api/repuestos/:id/cambiar-estado (PUT)',
             cambiarEstadoCategoriaRepuesto: '/api/categorias-repuestos/:id/cambiar-estado (PUT)',
+            cambiarEstadoRepuesto: '/api/repuestos/estado/:id (PUT)',
 
             proveedores: '/api/proveedores',
             servicios: '/api/servicios',
