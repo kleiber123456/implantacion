@@ -13,19 +13,23 @@ const ProveedorModel = {
   },
 
   create: async (data) => {
-    const { nombre, telefono, nombre_empresa, nit, direccion, estado } = data;
+    const { nombre, telefono, nombre_empresa, nit, direccion, estado, correo, telefono_empresa } = data;
     const [result] = await db.query(
-      'INSERT INTO proveedor (nombre, telefono, nombre_empresa, nit, direccion, estado) VALUES (?, ?, ?, ?, ?, ?)',
-      [nombre, telefono, nombre_empresa, nit, direccion, estado || 'Activo']
+      `INSERT INTO proveedor 
+      (nombre, telefono, nombre_empresa, nit, direccion, estado, correo, telefono_empresa) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nombre, telefono, nombre_empresa, nit, direccion, estado || 'Activo', correo, telefono_empresa]
     );
     return result.insertId;
   },
 
   update: async (id, data) => {
-    const { nombre, telefono, nombre_empresa, nit, direccion, estado } = data;
+    const { nombre, telefono, nombre_empresa, nit, direccion, estado, correo, telefono_empresa } = data;
     await db.query(
-      'UPDATE proveedor SET nombre = ?, telefono = ?, nombre_empresa = ?, nit = ?, direccion = ?, estado = ? WHERE id = ?',
-      [nombre, telefono, nombre_empresa, nit, direccion, estado, id]
+      `UPDATE proveedor 
+       SET nombre = ?, telefono = ?, nombre_empresa = ?, nit = ?, direccion = ?, estado = ?, correo = ?, telefono_empresa = ? 
+       WHERE id = ?`,
+      [nombre, telefono, nombre_empresa, nit, direccion, estado, correo, telefono_empresa, id]
     );
   },
 
@@ -34,9 +38,8 @@ const ProveedorModel = {
   },
 
   async cambiarEstado(id, estado) {
-  await db.query('UPDATE proveedor SET estado = ? WHERE id = ?', [estado, id]);
-}
-
+    await db.query('UPDATE proveedor SET estado = ? WHERE id = ?', [estado, id]);
+  }
 };
 
 module.exports = ProveedorModel;
