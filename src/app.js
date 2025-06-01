@@ -11,6 +11,10 @@ const repuestoRoutes = require('./routes/repuestoRoutes');
 const categoriaRepuestoRoutes = require('./routes/categoriaRepuestoRoutes');
 const { cambiarEstado } = require('./models/proveedorModel');
 
+const marcaRoutes = require("./routes/marcaRoutes")
+const referenciaRoutes = require("./routes/referenciaRoutes")
+const vehiculoRoutes = require("./routes/vehiculoRoutes")
+const compraRoutes = require("./routes/compraRoutes")
 
 const app = express();
 
@@ -26,6 +30,10 @@ app.use('/api/servicios', servicioRoutes);
 app.use('/api/repuestos', repuestoRoutes);
 app.use('/api/categorias-repuestos', categoriaRepuestoRoutes);
 
+app.use("/api/marcas", marcaRoutes)
+app.use("/api/referencias", referenciaRoutes)
+app.use("/api/vehiculos", vehiculoRoutes)
+app.use("/api/compras", compraRoutes)
 
 
 app.get('/', (req, res) => {
@@ -55,8 +63,16 @@ app.get('/', (req, res) => {
             repuestos: '/api/repuestos',
             categoriasRepuestos: '/api/categorias-repuestos',
             
+            marcas: "/api/marcas",
+            referencias: "/api/referencias",
+            vehiculos: "/api/vehiculos",
+            compras: "/api/compras",
+            referenciasPorMarca: "/api/referencias/marca/:marcaId (GET)",
+            vehiculosPorCliente: "/api/vehiculos/cliente/:clienteId (GET)",
+            cambiarEstadoVehiculo: "/api/vehiculos/:id/cambiar-estado (PUT)",
+            cambiarEstadoCompra: "/api/compras/:id/cambiar-estado (PUT)",
             
-        }
+        },
     });
 });
 
