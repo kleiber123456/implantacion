@@ -54,15 +54,17 @@ const CompraService = {
             subtotal,
           })
 
-          // Actualizar el stock del repuesto
-          const nuevaCantidad = repuesto.cantidad + cantidad
-          const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+          // Solo actualizar el stock si el estado es "Completado"
+          if (estado === "Completado") {
+            const nuevaCantidad = repuesto.cantidad + cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
 
-          await RepuestoModel.update(repuesto_id, {
-            ...repuesto,
-            cantidad: nuevaCantidad,
-            total: nuevoTotal,
-          })
+            await RepuestoModel.update(repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
         }
       }
 
@@ -91,22 +93,24 @@ const CompraService = {
     try {
       const { proveedor_id, detalles, estado } = data
 
-      // Obtener la compra actual para revertir el stock
+      // Obtener la compra actual para verificar el estado
       const compraActual = await CompraModel.findById(id)
       const detallesActuales = await CompraPorRepuestoModel.findByCompra(id)
 
-      // Revertir el stock de los detalles actuales
-      for (const detalle of detallesActuales) {
-        const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
-        if (repuesto) {
-          const nuevaCantidad = repuesto.cantidad - detalle.cantidad
-          const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+      // Si la compra estaba en estado "Completado", revertir el stock
+      if (compraActual.estado === "Completado") {
+        for (const detalle of detallesActuales) {
+          const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
+          if (repuesto) {
+            const nuevaCantidad = repuesto.cantidad - detalle.cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
 
-          await RepuestoModel.update(detalle.repuesto_id, {
-            ...repuesto,
-            cantidad: nuevaCantidad,
-            total: nuevoTotal,
-          })
+            await RepuestoModel.update(detalle.repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
         }
       }
 
@@ -135,15 +139,17 @@ const CompraService = {
             subtotal,
           })
 
-          // Actualizar el stock del repuesto
-          const nuevaCantidad = repuesto.cantidad + cantidad
-          const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+          // Solo actualizar el stock si el nuevo estado es "Completado"
+          if (estado === "Completado") {
+            const nuevaCantidad = repuesto.cantidad + cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
 
-          await RepuestoModel.update(repuesto_id, {
-            ...repuesto,
-            cantidad: nuevaCantidad,
-            total: nuevoTotal,
-          })
+            await RepuestoModel.update(repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
         }
       }
 
@@ -169,21 +175,26 @@ const CompraService = {
     await connection.beginTransaction()
 
     try {
-      // Obtener los detalles para revertir el stock
-      const detalles = await CompraPorRepuestoModel.findByCompra(id)
+      // Obtener la compra para verificar el estado
+      const compra = await CompraModel.findById(id)
 
-      // Revertir el stock
-      for (const detalle of detalles) {
-        const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
-        if (repuesto) {
-          const nuevaCantidad = repuesto.cantidad - detalle.cantidad
-          const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+      // Solo revertir el stock si la compra estaba en estado "Completado"
+      if (compra && compra.estado === "Completado") {
+        const detalles = await CompraPorRepuestoModel.findByCompra(id)
 
-          await RepuestoModel.update(detalle.repuesto_id, {
-            ...repuesto,
-            cantidad: nuevaCantidad,
-            total: nuevoTotal,
-          })
+        // Revertir el stock
+        for (const detalle of detalles) {
+          const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
+          if (repuesto) {
+            const nuevaCantidad = repuesto.cantidad - detalle.cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+
+            await RepuestoModel.update(detalle.repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
         }
       }
 
@@ -203,26 +214,75 @@ const CompraService = {
   },
 
   cambiarEstado: async (id) => {
-    const compra = await CompraModel.findById(id)
-    if (!compra) throw new Error("Compra no encontrada")
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
 
-    let nuevoEstado
-    switch (compra.estado) {
-      case "Pendiente":
-        nuevoEstado = "Completado"
-        break
-      case "Completado":
-        nuevoEstado = "Cancelado"
-        break
-      case "Cancelado":
-        nuevoEstado = "Pendiente"
-        break
-      default:
-        nuevoEstado = "Pendiente"
+    try {
+      const compra = await CompraModel.findById(id)
+      if (!compra) throw new Error("Compra no encontrada")
+
+      let nuevoEstado
+      switch (compra.estado) {
+        case "Pendiente":
+          nuevoEstado = "Completado"
+          break
+        case "Completado":
+          nuevoEstado = "Cancelado"
+          break
+        case "Cancelado":
+          nuevoEstado = "Pendiente"
+          break
+        default:
+          nuevoEstado = "Pendiente"
+      }
+
+      // Si cambia de Pendiente a Completado, actualizar el stock
+      if (compra.estado === "Pendiente" && nuevoEstado === "Completado") {
+        const detalles = await CompraPorRepuestoModel.findByCompra(id)
+
+        for (const detalle of detalles) {
+          const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
+          if (repuesto) {
+            const nuevaCantidad = repuesto.cantidad + detalle.cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+
+            await RepuestoModel.update(detalle.repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
+        }
+      }
+
+      // Si cambia de Completado a otro estado, revertir el stock
+      else if (compra.estado === "Completado" && nuevoEstado !== "Completado") {
+        const detalles = await CompraPorRepuestoModel.findByCompra(id)
+
+        for (const detalle of detalles) {
+          const repuesto = await RepuestoModel.findById(detalle.repuesto_id)
+          if (repuesto) {
+            const nuevaCantidad = repuesto.cantidad - detalle.cantidad
+            const nuevoTotal = nuevaCantidad * repuesto.preciounitario
+
+            await RepuestoModel.update(detalle.repuesto_id, {
+              ...repuesto,
+              cantidad: nuevaCantidad,
+              total: nuevoTotal,
+            })
+          }
+        }
+      }
+
+      await CompraModel.cambiarEstado(id, nuevoEstado)
+      await connection.commit()
+      return nuevoEstado
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
     }
-
-    await CompraModel.cambiarEstado(id, nuevoEstado)
-    return nuevoEstado
   },
 }
 

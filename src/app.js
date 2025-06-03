@@ -15,6 +15,7 @@ const marcaRoutes = require("./routes/marcaRoutes")
 const referenciaRoutes = require("./routes/referenciaRoutes")
 const vehiculoRoutes = require("./routes/vehiculoRoutes")
 const compraRoutes = require("./routes/compraRoutes")
+const clienteRoutes = require("./routes/clienteRoutes")
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/api/marcas", marcaRoutes)
 app.use("/api/referencias", referenciaRoutes)
 app.use("/api/vehiculos", vehiculoRoutes)
 app.use("/api/compras", compraRoutes)
+app.use("/api/clientes", clienteRoutes)
 
 
 app.get('/', (req, res) => {
@@ -62,6 +64,7 @@ app.get('/', (req, res) => {
             usuarios: '/api/usuarios',
             repuestos: '/api/repuestos',
             categoriasRepuestos: '/api/categorias-repuestos',
+            clientes: "/api/clientes",
             
             marcas: "/api/marcas",
             referencias: "/api/referencias",
