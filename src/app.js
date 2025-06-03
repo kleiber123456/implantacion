@@ -16,6 +16,7 @@ const referenciaRoutes = require("./routes/referenciaRoutes")
 const vehiculoRoutes = require("./routes/vehiculoRoutes")
 const compraRoutes = require("./routes/compraRoutes")
 const clienteRoutes = require("./routes/clienteRoutes")
+const dashboardRoutes = require("./routes/dashboardRoutes")
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use("/api/referencias", referenciaRoutes)
 app.use("/api/vehiculos", vehiculoRoutes)
 app.use("/api/compras", compraRoutes)
 app.use("/api/clientes", clienteRoutes)
+app.use("/api/dashboard", dashboardRoutes)
 
 
 app.get('/', (req, res) => {
@@ -74,10 +76,14 @@ app.get('/', (req, res) => {
             vehiculosPorCliente: "/api/vehiculos/cliente/:clienteId (GET)",
             cambiarEstadoVehiculo: "/api/vehiculos/:id/cambiar-estado (PUT)",
             cambiarEstadoCompra: "/api/compras/:id/cambiar-estado (PUT)",
+            dashboard: "/api/dashboard",
+            estadisticas: "/api/dashboard/estadisticas (GET)",
+            serviciosActivos: "/api/dashboard/servicios-activos (GET)",
+            repuestosBajoStock: "/api/dashboard/repuestos-bajo-stock (GET)",
+            comprasRecientes: "/api/dashboard/compras-recientes (GET)",
             
         },
     });
 });
 
 module.exports = app;
-
