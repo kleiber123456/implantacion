@@ -18,6 +18,13 @@ const compraRoutes = require("./routes/compraRoutes")
 const clienteRoutes = require("./routes/clienteRoutes")
 const dashboardRoutes = require("./routes/dashboardRoutes")
 
+const estadoVentaRoutes = require("./routes/estadoVentaRoutes")
+const estadoCitaRoutes = require("./routes/estadoCitaRoutes")
+const horarioRoutes = require("./routes/horarioRoutes")
+const mecanicoRoutes = require("./routes/mecanicoRoutes")
+const ventaRoutes = require("./routes/ventaRoutes")
+const citaRoutes = require("./routes/citaRoutes")
+
 const app = express();
 
 app.use(cors());
@@ -38,6 +45,13 @@ app.use("/api/vehiculos", vehiculoRoutes)
 app.use("/api/compras", compraRoutes)
 app.use("/api/clientes", clienteRoutes)
 app.use("/api/dashboard", dashboardRoutes)
+
+app.use("/api/estados-venta", estadoVentaRoutes)
+app.use("/api/estados-cita", estadoCitaRoutes)
+app.use("/api/horarios", horarioRoutes)
+app.use("/api/mecanicos", mecanicoRoutes)
+app.use("/api/ventas", ventaRoutes)
+app.use("/api/citas", citaRoutes)
 
 
 app.get('/', (req, res) => {
@@ -81,9 +95,33 @@ app.get('/', (req, res) => {
             serviciosActivos: "/api/dashboard/servicios-activos (GET)",
             repuestosBajoStock: "/api/dashboard/repuestos-bajo-stock (GET)",
             comprasRecientes: "/api/dashboard/compras-recientes (GET)",
-            
+
+            estadosVenta: "/api/estados-venta",
+            estadosCita: "/api/estados-cita",
+            horarios: "/api/horarios",
+            mecanicos: "/api/mecanicos",
+            ventas: "/api/ventas",
+            citas: "/api/citas",
+
+            horariosPorFecha: "/api/horarios/fecha/:fecha (GET)",
+            horariosPorRango: "/api/horarios/rango?fechaInicio=&fechaFin= (GET)",
+            mecanicosPorEstado: "/api/mecanicos/estado/:estado (GET)",
+            cambiarEstadoMecanico: "/api/mecanicos/:id/cambiar-estado (PUT)",
+
+            ventasPorCliente: "/api/ventas/cliente/:clienteId (GET)",
+            ventasPorEstado: "/api/ventas/estado/:estadoId (GET)",
+            ventasPorRango: "/api/ventas/rango?fechaInicio=&fechaFin= (GET)",
+            cambiarEstadoVenta: "/api/ventas/:id/cambiar-estado (PUT)",
+
+            citasPorCliente: "/api/citas/cliente/:clienteId (GET)",
+            citasPorMecanico: "/api/citas/mecanico/:mecanicoId (GET)",
+            citasPorFecha: "/api/citas/fecha/:fecha (GET)",
+            citasPorEstado: "/api/citas/estado/:estadoId (GET)",
+            disponibilidadMecanicos: "/api/citas/disponibilidad/mecanicos?fecha=&hora= (GET)",
+            cambiarEstadoCita: "/api/citas/:id/cambiar-estado (PUT)",
         },
     });
 });
 
 module.exports = app;
+
