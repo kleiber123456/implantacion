@@ -1,5 +1,5 @@
 // src/models/citaModel.js
-const db = require('../config/db');
+const db = require("../config/db")
 
 const CitaModel = {
   findAll: async () => {
@@ -24,12 +24,13 @@ const CitaModel = {
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico mec ON c.mecanico_id = mec.id
       ORDER BY c.fecha DESC, c.hora DESC
-    `);
-    return rows;
+    `)
+    return rows
   },
 
   findById: async (id) => {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
@@ -52,12 +53,15 @@ const CitaModel = {
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico mec ON c.mecanico_id = mec.id
       WHERE c.id = ?
-    `, [id]);
-    return rows[0];
+    `,
+      [id],
+    )
+    return rows[0]
   },
 
   findByCliente: async (clienteId) => {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
@@ -69,12 +73,15 @@ const CitaModel = {
       JOIN mecanico mec ON c.mecanico_id = mec.id
       WHERE v.cliente_id = ?
       ORDER BY c.fecha DESC, c.hora DESC
-    `, [clienteId]);
-    return rows;
+    `,
+      [clienteId],
+    )
+    return rows
   },
 
   findByMecanico: async (mecanicoId) => {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
@@ -86,12 +93,15 @@ const CitaModel = {
       JOIN cliente cl ON v.cliente_id = cl.id
       WHERE c.mecanico_id = ?
       ORDER BY c.fecha DESC, c.hora DESC
-    `, [mecanicoId]);
-    return rows;
+    `,
+      [mecanicoId],
+    )
+    return rows
   },
 
   findByFecha: async (fecha) => {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
@@ -106,12 +116,15 @@ const CitaModel = {
       JOIN mecanico mec ON c.mecanico_id = mec.id
       WHERE c.fecha = ?
       ORDER BY c.hora
-    `, [fecha]);
-    return rows;
+    `,
+      [fecha],
+    )
+    return rows
   },
 
   findByEstado: async (estadoId) => {
-    const [rows] = await db.query(`
+    const [rows] = await db.query(
+      `
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
@@ -126,46 +139,68 @@ const CitaModel = {
       JOIN mecanico mec ON c.mecanico_id = mec.id
       WHERE c.estado_cita_id = ?
       ORDER BY c.fecha DESC, c.hora DESC
-    `, [estadoId]);
-    return rows;
+    `,
+      [estadoId],
+    )
+    return rows
   },
 
-  // Verificar disponibilidad de mecánico
+  // Verificar disponibilidad de mecánico - ACTUALIZADO para validar días de trabajo
   checkMecanicoDisponibilidad: async (mecanicoId, fecha, hora) => {
-    const [rows] = await db.query(`
+    // Verificar que la fecha sea un día de trabajo (Lunes a Sábado)
+    const fechaObj = new Date(fecha)
+    const diaSemana = fechaObj.getDay() // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+
+    // Si es domingo (0), no se trabaja
+    if (diaSemana === 0) {
+      return false
+    }
+
+    // Verificar que la hora esté dentro del horario de trabajo (8:00 - 18:00)
+    const horaNum = Number.parseInt(hora.split(":")[0])
+    if (horaNum < 8 || horaNum >= 18) {
+      return false
+    }
+
+    // Verificar que no haya otra cita en esa fecha y hora
+    const [rows] = await db.query(
+      `
       SELECT COUNT(*) as count
       FROM cita 
       WHERE mecanico_id = ? AND fecha = ? AND hora = ? AND estado_cita_id NOT IN (
         SELECT id FROM estado_cita WHERE nombre IN ('Cancelada', 'Completada')
       )
-    `, [mecanicoId, fecha, hora]);
-    return rows[0].count === 0;
+    `,
+      [mecanicoId, fecha, hora],
+    )
+
+    return rows[0].count === 0
   },
 
   create: async (data) => {
-    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data;
+    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data
     const [result] = await db.query(
-      'INSERT INTO cita (fecha, hora, estado_cita_id, vehiculo_id, mecanico_id) VALUES (?, ?, ?, ?, ?)',
-      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id]
-    );
-    return result.insertId;
+      "INSERT INTO cita (fecha, hora, estado_cita_id, vehiculo_id, mecanico_id) VALUES (?, ?, ?, ?, ?)",
+      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id],
+    )
+    return result.insertId
   },
 
   update: async (id, data) => {
-    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data;
+    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data
     await db.query(
-      'UPDATE cita SET fecha = ?, hora = ?, estado_cita_id = ?, vehiculo_id = ?, mecanico_id = ? WHERE id = ?',
-      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id, id]
-    );
+      "UPDATE cita SET fecha = ?, hora = ?, estado_cita_id = ?, vehiculo_id = ?, mecanico_id = ? WHERE id = ?",
+      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id, id],
+    )
   },
 
   delete: async (id) => {
-    await db.query('DELETE FROM cita WHERE id = ?', [id]);
+    await db.query("DELETE FROM cita WHERE id = ?", [id])
   },
 
   cambiarEstado: async (id, estadoId) => {
-    await db.query('UPDATE cita SET estado_cita_id = ? WHERE id = ?', [estadoId, id]);
-  }
-};
+    await db.query("UPDATE cita SET estado_cita_id = ? WHERE id = ?", [estadoId, id])
+  },
+}
 
-module.exports = CitaModel;
+module.exports = CitaModel

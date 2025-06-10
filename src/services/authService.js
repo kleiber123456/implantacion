@@ -1,83 +1,87 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const UsuarioModel = require('../models/usuarioModel');
-const transporter = require('../config/nodemailer');
-const db = require('../config/db');
+const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
+const UsuarioModel = require("../models/usuarioModel")
+const transporter = require("../config/nodemailer")
+const db = require("../config/db")
 
 function generarCodigo() {
-  return Math.floor(100000 + Math.random() * 900000).toString(); // 6 dígitos
+  return Math.floor(100000 + Math.random() * 900000).toString() // 6 dígitos
 }
 
 const AuthService = {
   async login({ correo, password }) {
-    const usuario = await UsuarioModel.findByEmail(correo);
-    if (!usuario || !await bcrypt.compare(password, usuario.password)) {
-      throw new Error('Credenciales inválidas');
+    const usuario = await UsuarioModel.findByEmail(correo)
+    if (!usuario || !(await bcrypt.compare(password, usuario.password))) {
+      throw new Error("Credenciales inválidas")
     }
-    const token = jwt.sign(
-      { id: usuario.id, rol: usuario.rol_id },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-    return { token: `${token}`, usuario };
+    const token = jwt.sign({ id: usuario.id, rol: usuario.rol_id }, process.env.JWT_SECRET, { expiresIn: "1d" })
+    return { token: `${token}`, usuario }
   },
 
   async register(data) {
-    const connection = await db.getConnection();
-    await connection.beginTransaction();
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
 
     try {
-      const hashed = await bcrypt.hash(data.password, 10);
-      const rol = data.rol_id || 4; // Valor predeterminado: 4
-  
+      const hashed = await bcrypt.hash(data.password, 10)
+      const rol = data.rol_id || 4 // Valor predeterminado: 4
+
       // Insertar en usuario con teléfono y dirección
       const [usuarioResult] = await connection.query(
-        'INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [data.nombre, data.apellido, data.correo, data.tipo_documento, data.documento, hashed, rol, data.telefono, data.direccion]
-      );
-      
-      const usuarioId = usuarioResult.insertId;
-      
+        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          data.nombre,
+          data.apellido,
+          data.correo,
+          data.tipo_documento,
+          data.documento,
+          hashed,
+          rol,
+          data.telefono,
+          data.direccion,
+        ],
+      )
+
+      const usuarioId = usuarioResult.insertId
+
       // Si el rol es de cliente (asumiendo que el ID de rol cliente es 2)
       if (rol === 4) {
         await connection.query(
-          'INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [usuarioId, data.nombre, data.apellido, data.direccion, data.tipo_documento, data.documento, data.correo, data.telefono, 'Activo']
-        );
-      }
-      
-      // Si el rol es de mecánico (asumiendo que el ID de rol mecánico es 3)
-      if (rol === 3) {
-        // Para mecánicos, necesitamos un horario_id, se puede crear uno predeterminado o solicitar en el registro
-        let horarioId;
-        
-        if (data.horario_id) {
-          // Si se proporciona un horario_id
-          horarioId = data.horario_id;
-        } else {
-          // Crear un horario predeterminado
-          const [horarioResult] = await connection.query(
-            'INSERT INTO horario (fecha, hora_inicio, hora_fin) VALUES (CURDATE(), "08:00:00", "17:00:00")',
-            []
-          );
-          horarioId = horarioResult.insertId;
-        }
-        
-        await connection.query(
-          'INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             usuarioId,
-            data.nombre, 
-            data.apellido, 
-            data.tipo_documento, 
-            data.documento, 
-            data.direccion, 
-            data.telefono, 
+            data.nombre,
+            data.apellido,
+            data.direccion,
+            data.tipo_documento,
+            data.documento,
+            data.correo,
+            data.telefono,
+            "Activo",
+          ],
+        )
+      }
+
+      // Si el rol es de mecánico (asumiendo que el ID de rol mecánico es 3)
+      if (rol === 3) {
+        // Para mecánicos, usar horario estándar (ID 1 = Lunes, pero trabajan todos los días)
+        const horarioId = 1 // Horario estándar de Lunes
+
+        await connection.query(
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            usuarioId,
+            data.nombre,
+            data.apellido,
+            data.tipo_documento,
+            data.documento,
+            data.direccion,
+            data.telefono,
             data.telefono_emergencia || data.telefono, // Si no hay teléfono de emergencia, usar el principal
-            'Activo',
-            horarioId
-          ]
-        );
+            "Activo",
+            horarioId,
+          ],
+        )
       }
 
       // Enviar correo de bienvenida mejorado
@@ -112,34 +116,31 @@ const AuthService = {
               </div>
             </div>
           </div>
-        `
-      });
+        `,
+      })
 
-      await connection.commit();
+      await connection.commit()
     } catch (error) {
-      await connection.rollback();
-      throw error;
+      await connection.rollback()
+      throw error
     } finally {
-      connection.release();
+      connection.release()
     }
   },
 
   async solicitarCodigo(correo) {
-    const usuario = await UsuarioModel.findByEmail(correo);
-    if (!usuario) throw new Error('Correo no encontrado');
+    const usuario = await UsuarioModel.findByEmail(correo)
+    if (!usuario) throw new Error("Correo no encontrado")
 
-    const codigo = generarCodigo();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+    const codigo = generarCodigo()
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutos
 
-    await db.execute(
-      "INSERT INTO codigos (correo, codigo, expires_at) VALUES (?, ?, ?)",
-      [correo, codigo, expiresAt]
-    );
+    await db.execute("INSERT INTO codigos (correo, codigo, expires_at) VALUES (?, ?, ?)", [correo, codigo, expiresAt])
 
     // Enviar correo de recuperación de contraseña mejorado
     await transporter.sendMail({
       to: correo,
-      subject: '🔑 Solicitud de recuperación de contraseña para MotOrtega',
+      subject: "🔑 Solicitud de recuperación de contraseña para MotOrtega",
       html: `
         <div style="background-color: #f9fafc; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
           <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05); overflow: hidden;">
@@ -169,33 +170,30 @@ const AuthService = {
             </div>
           </div>
         </div>
-      `
-    });
+      `,
+    })
   },
 
   async verificarCodigo(correo, codigo) {
-    const [rows] = await db.execute(
-      "SELECT * FROM codigos WHERE correo = ? AND codigo = ?",
-      [correo, codigo]
-    );
+    const [rows] = await db.execute("SELECT * FROM codigos WHERE correo = ? AND codigo = ?", [correo, codigo])
 
-    if (rows.length === 0) throw new Error("Código inválido o ya usado");
+    if (rows.length === 0) throw new Error("Código inválido o ya usado")
 
-    const registro = rows[0];
+    const registro = rows[0]
     if (new Date() > new Date(registro.expires_at)) {
-      throw new Error("El código ha expirado");
+      throw new Error("El código ha expirado")
     }
 
-    await db.execute("DELETE FROM codigos WHERE id = ?", [registro.id]);
-    return true;
+    await db.execute("DELETE FROM codigos WHERE id = ?", [registro.id])
+    return true
   },
 
   async actualizarPassword(correo, nuevaPassword) {
-    const usuario = await UsuarioModel.findByEmail(correo);
-    if (!usuario) throw new Error('Correo no encontrado');
-    const hashed = await bcrypt.hash(nuevaPassword, 10);
-    await UsuarioModel.updatePassword(usuario.id, hashed);
-  }
-};
+    const usuario = await UsuarioModel.findByEmail(correo)
+    if (!usuario) throw new Error("Correo no encontrado")
+    const hashed = await bcrypt.hash(nuevaPassword, 10)
+    await UsuarioModel.updatePassword(usuario.id, hashed)
+  },
+}
 
-module.exports = AuthService;
+module.exports = AuthService
