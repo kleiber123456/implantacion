@@ -54,11 +54,9 @@ const UsuarioService = {
       }
 
       if (rol === 3) {
-        // Insertar mecánico con horario estándar
-        const horarioId = 1 // Horario estándar (Lunes, pero trabajan todos los días)
-
+        // Insertar mecánico
         await connection.query(
-          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             usuarioId,
             data.nombre,
@@ -69,7 +67,6 @@ const UsuarioService = {
             data.telefono,
             data.telefono_emergencia || data.telefono,
             "Activo",
-            horarioId,
           ],
         )
       }
@@ -89,10 +86,26 @@ const UsuarioService = {
       })
 
       await connection.commit()
+      return usuarioId
     } catch (error) {
       await connection.rollback()
       throw error
+    } finally {
+      connection.release()
     }
+  },
+
+  actualizar: (id, data) => UsuarioModel.update(id, data),
+
+  eliminar: (id) => UsuarioModel.delete(id),
+
+  cambiarEstado: async (id) => {
+    const usuario = await UsuarioModel.findById(id)
+    if (!usuario) throw new Error("Usuario no encontrado")
+
+    const nuevoEstado = usuario.estado === "Activo" ? "Inactivo" : "Activo"
+    await UsuarioModel.cambiarEstado(id, nuevoEstado)
+    return nuevoEstado
   },
 }
 
