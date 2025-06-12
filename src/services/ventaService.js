@@ -4,6 +4,7 @@ const VentaPorServicioModel = require('../models/ventaPorServicioModel');
 const VentaPorRepuestoModel = require('../models/ventaPorRepuestoModel');
 const RepuestoModel = require('../models/repuestoModel');
 const ServicioModel = require('../models/servicioModel');
+const MecanicoModel = require('../models/mecanicoModel'); // AGREGADO
 const db = require('../config/db');
 
 const VentaService = {
@@ -29,17 +30,30 @@ const VentaService = {
     await connection.beginTransaction();
     
     try {
-      const { cliente_id, estado_venta_id, servicios, repuestos } = data;
+      const { cliente_id, estado_venta_id, mecanico_id, servicios, repuestos } = data; // AGREGADO mecanico_id
       
       // Validaciones básicas
       if (!cliente_id || !estado_venta_id) {
         throw new Error('Cliente y estado de venta son requeridos');
       }
       
+      // Validar mecánico si se proporciona
+      if (mecanico_id) {
+        const mecanicoData = await MecanicoModel.findById(mecanico_id);
+        if (!mecanicoData) {
+          throw new Error(`Mecánico con ID ${mecanico_id} no encontrado`);
+        }
+        
+        if (mecanicoData.estado !== 'Activo') {
+          throw new Error(`El mecánico ${mecanicoData.nombre} no está activo`);
+        }
+      }
+      
       // Crear la venta
       const ventaId = await VentaModel.create({
         cliente_id,
         estado_venta_id,
+        mecanico_id: mecanico_id || null, // AGREGADO
         fecha: new Date(),
         total: 0
       });
@@ -117,6 +131,7 @@ const VentaService = {
       await VentaModel.update(ventaId, {
         cliente_id,
         estado_venta_id,
+        mecanico_id: mecanico_id || null, // AGREGADO
         fecha: new Date(),
         total
       });
@@ -137,12 +152,24 @@ const VentaService = {
     await connection.beginTransaction();
     
     try {
-      const { cliente_id, estado_venta_id, servicios, repuestos } = data;
+      const { cliente_id, estado_venta_id, mecanico_id, servicios, repuestos } = data; // AGREGADO mecanico_id
       
       // Obtener la venta actual
       const ventaActual = await VentaModel.findById(id);
       if (!ventaActual) {
         throw new Error('Venta no encontrada');
+      }
+      
+      // Validar mecánico si se proporciona
+      if (mecanico_id) {
+        const mecanicoData = await MecanicoModel.findById(mecanico_id);
+        if (!mecanicoData) {
+          throw new Error(`Mecánico con ID ${mecanico_id} no encontrado`);
+        }
+        
+        if (mecanicoData.estado !== 'Activo') {
+          throw new Error(`El mecánico ${mecanicoData.nombre} no está activo`);
+        }
       }
       
       // Obtener los repuestos actuales para revertir el stock
@@ -238,6 +265,7 @@ const VentaService = {
       await VentaModel.update(id, {
         cliente_id,
         estado_venta_id,
+        mecanico_id: mecanico_id || null, // AGREGADO
         fecha: ventaActual.fecha,
         total
       });

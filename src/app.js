@@ -54,7 +54,7 @@ app.use("/api/citas", citaRoutes)
 app.get("/", (req, res) => {
   res.json({
     message: "Bienvenido a la API del Taller MotOrtega",
-    version: "2.0.0 - Sistema de horarios por días",
+    version: "3.0.0 - Sistema de novedades/excepciones para horarios",
     endpoints: {
       // Autenticación
       login: "/api/auth/login (POST)",
@@ -103,16 +103,19 @@ app.get("/", (req, res) => {
       estadosVenta: "/api/estados-venta",
       estadosCita: "/api/estados-cita",
 
-      // HORARIOS - NUEVO SISTEMA POR DÍAS
+      // HORARIOS - NUEVO SISTEMA DE NOVEDADES/EXCEPCIONES
       horarios: "/api/horarios (GET/POST)",
-      horariosTrabajo: "/api/horarios/trabajo (GET) - Lunes a Sábado",
-      horarioPorDia: "/api/horarios/dia/:dia (GET) - Ej: /api/horarios/dia/Lunes",
-      inicializarHorarios: "/api/horarios/inicializar (POST) - Crear horarios estándar",
+      horariosPorMecanico: "/api/horarios/mecanico/:mecanicoId (GET)",
+      horariosPorFecha: "/api/horarios/fecha/:fecha (GET)",
+      horariosPorDia: "/api/horarios/dia/:dia (GET)",
+      verificarDisponibilidad: "/api/horarios/disponibilidad?fecha=&hora= (GET)",
 
       // Mecánicos
       mecanicos: "/api/mecanicos",
       mecanicosPorEstado: "/api/mecanicos/estado/:estado (GET)",
       cambiarEstadoMecanico: "/api/mecanicos/:id/cambiar-estado (PUT)",
+      citasPorMecanico: "/api/mecanicos/:id/citas (GET)",
+      novedadesPorMecanico: "/api/mecanicos/:id/novedades (GET)",
 
       // Ventas
       ventas: "/api/ventas",
@@ -121,7 +124,7 @@ app.get("/", (req, res) => {
       ventasPorRango: "/api/ventas/rango?fechaInicio=&fechaFin= (GET)",
       cambiarEstadoVenta: "/api/ventas/:id/cambiar-estado (PUT)",
 
-      // CITAS - ACTUALIZADO PARA DÍAS DE TRABAJO
+      // CITAS - ACTUALIZADO PARA SISTEMA DE NOVEDADES
       citas: "/api/citas",
       citasPorCliente: "/api/citas/cliente/:clienteId (GET)",
       citasPorMecanico: "/api/citas/mecanico/:mecanicoId (GET)",
@@ -134,9 +137,9 @@ app.get("/", (req, res) => {
       dias: "Lunes a Sábado",
       horario: "8:00 AM - 6:00 PM",
       noDisponible: "Domingos",
+      novedades: "Se registran como excepciones en el sistema",
     },
   })
 })
 
 module.exports = app
-

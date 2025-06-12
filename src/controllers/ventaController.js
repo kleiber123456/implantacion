@@ -7,6 +7,7 @@ const VentaController = {
       const ventas = await VentaService.listar();
       res.json(ventas);
     } catch (error) {
+      console.error('Error al listar ventas:', error);
       res.status(500).json({ error: 'Error al listar las ventas' });
     }
   },
@@ -19,6 +20,7 @@ const VentaController = {
       }
       res.json(venta);
     } catch (error) {
+      console.error('Error al obtener venta:', error);
       res.status(500).json({ error: 'Error al obtener la venta' });
     }
   },
@@ -28,6 +30,7 @@ const VentaController = {
       const ventas = await VentaService.obtenerPorCliente(req.params.clienteId);
       res.json(ventas);
     } catch (error) {
+      console.error('Error al obtener ventas por cliente:', error);
       res.status(500).json({ error: 'Error al obtener las ventas del cliente' });
     }
   },
@@ -37,6 +40,7 @@ const VentaController = {
       const ventas = await VentaService.obtenerPorEstado(req.params.estadoId);
       res.json(ventas);
     } catch (error) {
+      console.error('Error al obtener ventas por estado:', error);
       res.status(500).json({ error: 'Error al obtener las ventas por estado' });
     }
   },
@@ -50,43 +54,103 @@ const VentaController = {
       const ventas = await VentaService.obtenerPorRangoFechas(fechaInicio, fechaFin);
       res.json(ventas);
     } catch (error) {
+      console.error('Error al obtener ventas por rango de fechas:', error);
       res.status(500).json({ error: 'Error al obtener las ventas por rango de fechas' });
     }
   },
 
   async crear(req, res) {
     try {
+      // Log para debugging
+      console.log('Datos recibidos para crear venta:', req.body);
+      
+      // Validaciones básicas
+      const { cliente_id, estado_venta_id } = req.body;
+      if (!cliente_id || !estado_venta_id) {
+        return res.status(400).json({ 
+          error: 'Cliente y estado de venta son requeridos' 
+        });
+      }
+
       const id = await VentaService.crear(req.body);
-      res.status(201).json({ message: 'Venta creada', id });
+      console.log('Venta creada con ID:', id);
+      
+      res.status(201).json({ 
+        message: 'Venta creada exitosamente', 
+        id,
+        success: true 
+      });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      console.error('Error al crear venta:', error);
+      res.status(400).json({ 
+        error: error.message,
+        success: false 
+      });
     }
   },
 
   async actualizar(req, res) {
     try {
+      console.log('Actualizando venta ID:', req.params.id);
+      console.log('Datos para actualizar:', req.body);
+      
       await VentaService.actualizar(req.params.id, req.body);
-      res.json({ message: 'Venta actualizada' });
+      
+      res.json({ 
+        message: 'Venta actualizada exitosamente',
+        success: true 
+      });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      console.error('Error al actualizar venta:', error);
+      res.status(400).json({ 
+        error: error.message,
+        success: false 
+      });
     }
   },
 
   async eliminar(req, res) {
     try {
+      console.log('Eliminando venta ID:', req.params.id);
+      
       await VentaService.eliminar(req.params.id);
-      res.json({ message: 'Venta eliminada' });
+      
+      res.json({ 
+        message: 'Venta eliminada exitosamente',
+        success: true 
+      });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      console.error('Error al eliminar venta:', error);
+      res.status(400).json({ 
+        error: error.message,
+        success: false 
+      });
     }
   },
 
   async cambiarEstado(req, res) {
     try {
-      const nuevoEstado = await VentaService.cambiarEstado(req.params.id, req.body.estado_venta_id);
-      res.json({ message: 'Estado de venta actualizado' });
+      const { estado_venta_id } = req.body;
+      if (!estado_venta_id) {
+        return res.status(400).json({ 
+          error: 'Estado de venta es requerido' 
+        });
+      }
+
+      console.log('Cambiando estado de venta ID:', req.params.id, 'a estado:', estado_venta_id);
+      
+      await VentaService.cambiarEstado(req.params.id, estado_venta_id);
+      
+      res.json({ 
+        message: 'Estado de venta actualizado exitosamente',
+        success: true 
+      });
     } catch (error) {
-      res.status(400).json({ error: error.message });
+      console.error('Error al cambiar estado de venta:', error);
+      res.status(400).json({ 
+        error: error.message,
+        success: false 
+      });
     }
   }
 };

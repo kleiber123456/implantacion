@@ -7,23 +7,16 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
-             v.color AS vehiculo_color,
-             v.tipo_vehiculo,
-             r.nombre AS referencia_nombre,
-             m.nombre AS marca_nombre,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
-             cl.telefono AS cliente_telefono,
-             mec.nombre AS mecanico_nombre,
-             mec.apellido AS mecanico_apellido
+             m.nombre AS mecanico_nombre,
+             m.apellido AS mecanico_apellido
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
-      JOIN referencia r ON v.referencia_id = r.id
-      JOIN marca m ON r.marca_id = m.id
       JOIN cliente cl ON v.cliente_id = cl.id
-      JOIN mecanico mec ON c.mecanico_id = mec.id
-      ORDER BY c.fecha DESC, c.hora DESC
+      JOIN mecanico m ON c.mecanico_id = m.id
+      ORDER BY c.fecha DESC, c.hora
     `)
     return rows
   },
@@ -34,24 +27,15 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
-             v.color AS vehiculo_color,
-             v.tipo_vehiculo,
-             r.nombre AS referencia_nombre,
-             m.nombre AS marca_nombre,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
-             cl.telefono AS cliente_telefono,
-             cl.correo AS cliente_correo,
-             mec.nombre AS mecanico_nombre,
-             mec.apellido AS mecanico_apellido,
-             mec.telefono AS mecanico_telefono
+             m.nombre AS mecanico_nombre,
+             m.apellido AS mecanico_apellido
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
-      JOIN referencia r ON v.referencia_id = r.id
-      JOIN marca m ON r.marca_id = m.id
       JOIN cliente cl ON v.cliente_id = cl.id
-      JOIN mecanico mec ON c.mecanico_id = mec.id
+      JOIN mecanico m ON c.mecanico_id = m.id
       WHERE c.id = ?
     `,
       [id],
@@ -65,14 +49,14 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
-             mec.nombre AS mecanico_nombre,
-             mec.apellido AS mecanico_apellido
+             m.nombre AS mecanico_nombre,
+             m.apellido AS mecanico_apellido
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
-      JOIN mecanico mec ON c.mecanico_id = mec.id
+      JOIN mecanico m ON c.mecanico_id = m.id
       WHERE v.cliente_id = ?
-      ORDER BY c.fecha DESC, c.hora DESC
+      ORDER BY c.fecha DESC, c.hora
     `,
       [clienteId],
     )
@@ -92,7 +76,7 @@ const CitaModel = {
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       WHERE c.mecanico_id = ?
-      ORDER BY c.fecha DESC, c.hora DESC
+      ORDER BY c.fecha DESC, c.hora
     `,
       [mecanicoId],
     )
@@ -107,13 +91,13 @@ const CitaModel = {
              v.placa AS vehiculo_placa,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
-             mec.nombre AS mecanico_nombre,
-             mec.apellido AS mecanico_apellido
+             m.nombre AS mecanico_nombre,
+             m.apellido AS mecanico_apellido
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
-      JOIN mecanico mec ON c.mecanico_id = mec.id
+      JOIN mecanico m ON c.mecanico_id = m.id
       WHERE c.fecha = ?
       ORDER BY c.hora
     `,
@@ -130,67 +114,35 @@ const CitaModel = {
              v.placa AS vehiculo_placa,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
-             mec.nombre AS mecanico_nombre,
-             mec.apellido AS mecanico_apellido
+             m.nombre AS mecanico_nombre,
+             m.apellido AS mecanico_apellido
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
-      JOIN mecanico mec ON c.mecanico_id = mec.id
+      JOIN mecanico m ON c.mecanico_id = m.id
       WHERE c.estado_cita_id = ?
-      ORDER BY c.fecha DESC, c.hora DESC
+      ORDER BY c.fecha DESC, c.hora
     `,
       [estadoId],
     )
     return rows
   },
 
-  // Verificar disponibilidad de mecánico - ACTUALIZADO para validar días de trabajo
-  checkMecanicoDisponibilidad: async (mecanicoId, fecha, hora) => {
-    // Verificar que la fecha sea un día de trabajo (Lunes a Sábado)
-    const fechaObj = new Date(fecha)
-    const diaSemana = fechaObj.getDay() // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
-
-    // Si es domingo (0), no se trabaja
-    if (diaSemana === 0) {
-      return false
-    }
-
-    // Verificar que la hora esté dentro del horario de trabajo (8:00 - 18:00)
-    const horaNum = Number.parseInt(hora.split(":")[0])
-    if (horaNum < 8 || horaNum >= 18) {
-      return false
-    }
-
-    // Verificar que no haya otra cita en esa fecha y hora
-    const [rows] = await db.query(
-      `
-      SELECT COUNT(*) as count
-      FROM cita 
-      WHERE mecanico_id = ? AND fecha = ? AND hora = ? AND estado_cita_id NOT IN (
-        SELECT id FROM estado_cita WHERE nombre IN ('Cancelada', 'Completada')
-      )
-    `,
-      [mecanicoId, fecha, hora],
-    )
-
-    return rows[0].count === 0
-  },
-
   create: async (data) => {
-    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data
+    const { fecha, hora, observaciones, estado_cita_id, vehiculo_id, mecanico_id } = data
     const [result] = await db.query(
-      "INSERT INTO cita (fecha, hora, estado_cita_id, vehiculo_id, mecanico_id) VALUES (?, ?, ?, ?, ?)",
-      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id],
+      "INSERT INTO cita (fecha, hora, observaciones, estado_cita_id, vehiculo_id, mecanico_id) VALUES (?, ?, ?, ?, ?, ?)",
+      [fecha, hora, observaciones, estado_cita_id, vehiculo_id, mecanico_id],
     )
     return result.insertId
   },
 
   update: async (id, data) => {
-    const { fecha, hora, estado_cita_id, vehiculo_id, mecanico_id } = data
+    const { fecha, hora, observaciones, estado_cita_id, vehiculo_id, mecanico_id } = data
     await db.query(
-      "UPDATE cita SET fecha = ?, hora = ?, estado_cita_id = ?, vehiculo_id = ?, mecanico_id = ? WHERE id = ?",
-      [fecha, hora, estado_cita_id, vehiculo_id, mecanico_id, id],
+      "UPDATE cita SET fecha = ?, hora = ?, observaciones = ?, estado_cita_id = ?, vehiculo_id = ?, mecanico_id = ? WHERE id = ?",
+      [fecha, hora, observaciones, estado_cita_id, vehiculo_id, mecanico_id, id],
     )
   },
 
@@ -200,6 +152,26 @@ const CitaModel = {
 
   cambiarEstado: async (id, estadoId) => {
     await db.query("UPDATE cita SET estado_cita_id = ? WHERE id = ?", [estadoId, id])
+  },
+
+  // Verificar si un mecánico ya tiene una cita en una fecha y hora específicas
+  verificarDisponibilidadMecanico: async (mecanicoId, fecha, hora, citaId = null) => {
+    let query = `
+      SELECT COUNT(*) as total
+      FROM cita
+      WHERE mecanico_id = ? AND fecha = ? AND hora = ?
+    `
+
+    const params = [mecanicoId, fecha, hora]
+
+    // Si estamos actualizando una cita existente, excluirla de la verificación
+    if (citaId) {
+      query += " AND id != ?"
+      params.push(citaId)
+    }
+
+    const [rows] = await db.query(query, params)
+    return rows[0].total === 0 // Retorna true si está disponible (no hay citas)
   },
 }
 

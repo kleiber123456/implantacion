@@ -1,82 +1,73 @@
 // src/services/mecanicoService.js
-const MecanicoModel = require('../models/mecanicoModel');
-const HorarioModel = require('../models/horarioModel');
+const MecanicoModel = require("../models/mecanicoModel")
 
 const MecanicoService = {
   listar: () => MecanicoModel.findAll(),
-  
-  obtener: (id) => MecanicoModel.findById(id),
-  
-  obtenerPorEstado: (estado) => MecanicoModel.findByEstado(estado),
-  
-  crear: async (data) => {
-    const { nombre, apellido, tipo_documento, documento, telefono } = data;
-    
-    // Validaciones básicas
-    if (!nombre || !apellido || !tipo_documento || !documento || !telefono) {
-      throw new Error('Nombre, apellido, tipo de documento, documento y teléfono son requeridos');
-    }
-    
-    // Verificar si ya existe un mecánico con el mismo documento
-    const mecanicoExistente = await MecanicoModel.findByDocumento(documento);
-    if (mecanicoExistente) {
-      throw new Error('Ya existe un mecánico con este documento');
-    }
-    
-    // Si no se proporciona horario_id, crear uno por defecto
-    let horarioId = data.horario_id;
-    if (!horarioId) {
-      horarioId = await HorarioModel.create({
-        fecha: new Date(),
-        hora_inicio: '08:00:00',
-        hora_fin: '17:00:00'
-      });
-    }
-    
-    const mecanicoData = {
-      ...data,
-      horario_id: horarioId,
-      telefono_emergencia: data.telefono_emergencia || data.telefono
-    };
-    
-    return MecanicoModel.create(mecanicoData);
-  },
-  
-  actualizar: async (id, data) => {
-    const mecanico = await MecanicoModel.findById(id);
-    if (!mecanico) {
-      throw new Error('Mecánico no encontrado');
-    }
-    
-    // Verificar si hay otro mecánico con el mismo documento (que no sea este)
-    if (data.documento) {
-      const mecanicoExistente = await MecanicoModel.findByDocumento(data.documento);
-      if (mecanicoExistente && mecanicoExistente.id !== parseInt(id)) {
-        throw new Error('Ya existe otro mecánico con este documento');
-      }
-    }
-    
-    return MecanicoModel.update(id, data);
-  },
-  
-  eliminar: async (id) => {
-    const mecanico = await MecanicoModel.findById(id);
-    if (!mecanico) {
-      throw new Error('Mecánico no encontrado');
-    }
-    return MecanicoModel.delete(id);
-  },
-  
-  cambiarEstado: async (id) => {
-    const mecanico = await MecanicoModel.findById(id);
-    if (!mecanico) {
-      throw new Error('Mecánico no encontrado');
-    }
-    
-    const nuevoEstado = mecanico.estado === 'Activo' ? 'Inactivo' : 'Activo';
-    await MecanicoModel.cambiarEstado(id, nuevoEstado);
-    return nuevoEstado;
-  }
-};
 
-module.exports = MecanicoService;
+  obtener: (id) => MecanicoModel.findById(id),
+
+  obtenerPorEstado: (estado) => MecanicoModel.findByEstado(estado),
+
+  crear: async (data) => {
+    // Validar datos requeridos
+    if (!data.nombre || !data.apellido || !data.tipo_documento || !data.documento) {
+      throw new Error("Nombre, apellido, tipo de documento y documento son requeridos")
+    }
+
+    // Validar que el tipo de documento sea válido
+    const tiposValidos = ["Cédula de ciudadanía", "Tarjeta de identidad"]
+    if (!tiposValidos.includes(data.tipo_documento)) {
+      throw new Error("Tipo de documento no válido")
+    }
+
+    // Validar que el teléfono de emergencia sea diferente al teléfono principal
+    if (data.telefono && data.telefono_emergencia && data.telefono === data.telefono_emergencia) {
+      throw new Error("El teléfono de emergencia debe ser diferente al teléfono principal")
+    }
+
+    return MecanicoModel.create(data)
+  },
+
+  actualizar: async (id, data) => {
+    // Verificar que el mecánico exista
+    const mecanico = await MecanicoModel.findById(id)
+    if (!mecanico) {
+      throw new Error("Mecánico no encontrado")
+    }
+
+    // Validar datos requeridos
+    if (!data.nombre || !data.apellido || !data.tipo_documento || !data.documento) {
+      throw new Error("Nombre, apellido, tipo de documento y documento son requeridos")
+    }
+
+    // Validar que el tipo de documento sea válido
+    const tiposValidos = ["Cédula de ciudadanía", "Tarjeta de identidad"]
+    if (!tiposValidos.includes(data.tipo_documento)) {
+      throw new Error("Tipo de documento no válido")
+    }
+
+    // Validar que el teléfono de emergencia sea diferente al teléfono principal
+    if (data.telefono && data.telefono_emergencia && data.telefono === data.telefono_emergencia) {
+      throw new Error("El teléfono de emergencia debe ser diferente al teléfono principal")
+    }
+
+    return MecanicoModel.update(id, data)
+  },
+
+  eliminar: (id) => MecanicoModel.delete(id),
+
+  cambiarEstado: async (id) => {
+    const mecanico = await MecanicoModel.findById(id)
+    if (!mecanico) throw new Error("Mecánico no encontrado")
+
+    const nuevoEstado = mecanico.estado === "Activo" ? "Inactivo" : "Activo"
+    await MecanicoModel.cambiarEstado(id, nuevoEstado)
+    return nuevoEstado
+  },
+
+  obtenerCitas: (id) => MecanicoModel.getCitasByMecanico(id),
+
+  obtenerNovedades: (id) => MecanicoModel.getNovedadesByMecanico(id),
+}
+
+module.exports = MecanicoService
