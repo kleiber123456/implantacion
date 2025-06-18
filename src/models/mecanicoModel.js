@@ -63,20 +63,29 @@ const MecanicoModel = {
     return rows
   },
 
-  // Obtener las novedades/excepciones de horario de un mecánico
-  getNovedadesByMecanico: async (mecanicoId) => {
+  // MÉTODO ELIMINADO: getNovedadesByMecanico ya no es necesario
+  // porque los mecánicos ya no tienen horarios asignados
+
+  // Si necesitas obtener información adicional del mecánico,
+  // puedes agregar otros métodos aquí que no dependan de horarios
+
+  // Ejemplo: Obtener estadísticas del mecánico
+  getEstadisticasByMecanico: async (mecanicoId) => {
     const [rows] = await db.query(
       `
-      SELECT *
-      FROM horario
-      WHERE mecanico_id = ?
-      ORDER BY fecha DESC
+      SELECT 
+        COUNT(*) as total_citas,
+        COUNT(CASE WHEN ec.nombre = 'Completada' THEN 1 END) as citas_completadas,
+        COUNT(CASE WHEN ec.nombre = 'Pendiente' THEN 1 END) as citas_pendientes,
+        COUNT(CASE WHEN ec.nombre = 'Cancelada' THEN 1 END) as citas_canceladas
+      FROM cita c
+      JOIN estado_cita ec ON c.estado_cita_id = ec.id
+      WHERE c.mecanico_id = ?
     `,
       [mecanicoId],
     )
-    return rows
+    return rows[0]
   },
 }
 
-module.exports = MecanicoModel
-
+module.exports = MecanicoModel

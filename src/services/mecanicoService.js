@@ -67,7 +67,11 @@ const MecanicoService = {
 
   obtenerCitas: (id) => MecanicoModel.getCitasByMecanico(id),
 
-  obtenerNovedades: (id) => MecanicoModel.getNovedadesByMecanico(id),
+  // MÉTODO ELIMINADO: obtenerNovedades ya no es necesario
+  // obtenerNovedades: (id) => MecanicoModel.getNovedadesByMecanico(id),
+
+  // Nuevo método para obtener estadísticas del mecánico
+  obtenerEstadisticas: (id) => MecanicoModel.getEstadisticasByMecanico(id),
 }
 
-module.exports = MecanicoService
+module.exports = MecanicoService
