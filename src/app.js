@@ -68,6 +68,7 @@ app.get("/", (req, res) => {
 
       // Cambios de estado
       cambiarEstadoUsuario: "/api/usuarios/:id/cambiar-estado (PUT)",
+      cambiarEstadoRol: "/api/roles/:id/cambiar-estado (PUT)", // <-- Agregado aquí
       cambiarEstadoProveedor: "/api/proveedores/:id/cambiar-estado (PUT)",
       cambiarEstadoServicio: "/api/servicios/:id/cambiar-estado (PUT)",
       cambiarEstadoRepuesto: "/api/repuestos/:id/cambiar-estado (PUT)",

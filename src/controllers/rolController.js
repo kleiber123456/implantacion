@@ -25,6 +25,17 @@ const RolController = {
   async eliminar(req, res) {
     await RolService.eliminar(req.params.id);
     res.json({ message: 'Rol eliminado' });
+  },
+
+  async cambiarEstado(req, res) {
+    try {
+      const id = req.params.id;
+      const nuevoEstado = await RolService.cambiarEstado(id);
+      res.json({ message: `Estado actualizado a ${nuevoEstado}` });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Error al cambiar el estado del rol' });
+    }
   }
 };
 

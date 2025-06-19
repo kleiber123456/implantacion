@@ -24,7 +24,11 @@ const RolModel = {
 
   async delete(id) {
     await db.query('DELETE FROM rol WHERE id = ?', [id]);
-  }
+  },
+
+  async cambiarEstado(id, estado) {
+    await db.query('UPDATE rol SET estado = ? WHERE id = ?', [estado, id]);
+  },
 };
 
 module.exports = RolModel;
