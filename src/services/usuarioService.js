@@ -17,9 +17,9 @@ const UsuarioService = {
       const rol = data.rol_id || 4 // rol cliente por defecto
       data.password = hashed
 
-      // Crear usuario
+      // Crear usuario principal
       const [usuarioResult] = await connection.query(
-        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           data.nombre,
           data.apellido,
@@ -30,13 +30,15 @@ const UsuarioService = {
           rol,
           data.telefono,
           data.direccion,
+          data.estado || "Activo",
         ],
       )
 
       const usuarioId = usuarioResult.insertId
 
+      // Crear registro en tabla específica según el rol
       if (rol === 4) {
-        // Insertar cliente
+        // Cliente
         await connection.query(
           "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
@@ -48,15 +50,15 @@ const UsuarioService = {
             data.documento,
             data.correo,
             data.telefono,
-            "Activo",
+            data.estado || "Activo",
           ],
         )
       }
 
       if (rol === 3) {
-        // Insertar mecánico
+        // Mecánico
         await connection.query(
-          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             usuarioId,
             data.nombre,
@@ -66,24 +68,33 @@ const UsuarioService = {
             data.direccion,
             data.telefono,
             data.telefono_emergencia || data.telefono,
-            "Activo",
+            data.correo,
+            data.estado || "Activo",
           ],
         )
       }
 
       // Enviar correo de bienvenida
-      await transporter.sendMail({
-        to: data.correo,
-        subject: `¡Bienvenido a la comunidad MotOrtega, ${data.nombre}! 🚀`,
-        html: `
-          <div style="background-color: #f9fafc; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
-            <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px;">
-              <h1 style="color: #333333;">¡Hola, ${data.nombre}!</h1>
-              <p style="color: #666666;">Gracias por unirte a nuestra comunidad en MotOrtega. Estamos emocionados de tenerte aquí.</p>
-            </div>
-          </div>
-        `,
-      })
+      if (data.correo) {
+        try {
+          await transporter.sendMail({
+            to: data.correo,
+            subject: `¡Bienvenido a la comunidad MotOrtega, ${data.nombre}! 🚀`,
+            html: `
+              <div style="background-color: #f9fafc; padding: 40px 0; font-family: 'Segoe UI', sans-serif;">
+                <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px;">
+                  <h1 style="color: #333333;">¡Hola, ${data.nombre}!</h1>
+                  <p style="color: #666666;">Gracias por unirte a nuestra comunidad en MotOrtega. Estamos emocionados de tenerte aquí.</p>
+                  <p style="color: #666666;">Tu cuenta ha sido creada exitosamente.</p>
+                </div>
+              </div>
+            `,
+          })
+        } catch (emailError) {
+          console.log("Error enviando correo:", emailError.message)
+          // No fallar la transacción por error de correo
+        }
+      }
 
       await connection.commit()
       return usuarioId

@@ -11,6 +11,12 @@ router.get("/mecanico/:mecanicoId", verifyToken, CitaController.obtenerPorMecani
 router.get("/fecha/:fecha", verifyToken, CitaController.obtenerPorFecha)
 router.get("/estado/:estadoId", verifyToken, CitaController.obtenerPorEstado)
 router.get("/disponibilidad/mecanicos", verifyToken, CitaController.verificarDisponibilidadMecanicos)
+
+// Rutas de historial
+router.get("/historial/cliente/:clienteId", verifyToken, CitaController.obtenerHistorialPorCliente)
+router.get("/historial/vehiculo/:vehiculoId", verifyToken, CitaController.obtenerHistorialPorVehiculo)
+router.get("/:id/historial", verifyToken, CitaController.obtenerHistorial)
+
 router.get("/:id", verifyToken, CitaController.obtener)
 
 // Rutas que requieren ser administrador o cliente

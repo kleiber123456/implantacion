@@ -43,51 +43,98 @@ const UsuarioModel = {
     await connection.beginTransaction()
 
     try {
-      const { nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id } = usuario
+      const {
+        nombre,
+        apellido,
+        tipo_documento,
+        documento,
+        correo,
+        telefono,
+        direccion,
+        estado,
+        rol_id,
+        telefono_emergencia,
+      } = usuario
+
+      // Obtener datos actuales del usuario
       const [userData] = await connection.query("SELECT rol_id FROM usuario WHERE id = ?", [id])
       const rolActual = userData[0]?.rol_id
 
+      // Actualizar usuario principal
       await connection.query(
         `UPDATE usuario SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ?, rol_id = ? WHERE id = ?`,
         [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id],
       )
 
-      if (rolActual === 2 && rol_id === 2) {
-        await connection.query(
-          `UPDATE cliente SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
-          [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id],
-        )
-      } else if (rolActual === 3 && rol_id === 3) {
-        await connection.query(
-          `UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
-          [nombre, apellido, tipo_documento, documento, telefono, direccion, estado, id],
-        )
-      } else if (rolActual !== rol_id) {
-        if (rol_id === 2) {
+      // Sincronizar con cliente si el rol actual o nuevo es cliente (rol_id = 2)
+      if (rolActual === 2 || rol_id === 4) {
+        const [clienteExists] = await connection.query("SELECT id FROM cliente WHERE id = ?", [id])
+
+        if (clienteExists.length > 0) {
+          // Actualizar cliente existente
           await connection.query(
-            `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE 
-             nombre = VALUES(nombre), apellido = VALUES(apellido), direccion = VALUES(direccion),
-             tipo_documento = VALUES(tipo_documento), documento = VALUES(documento), correo = VALUES(correo),
-             telefono = VALUES(telefono), estado = VALUES(estado)`,
-            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado],
+            `UPDATE cliente SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
+            [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id],
+          )
+        } else if (rol_id === 4) {
+          // Crear nuevo cliente
+          await connection.query(
+            `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado || "Activo"],
           )
         }
+      }
 
-        if (rol_id === 3) {
-          // Usar horario estándar para nuevos mecánicos
-          const horarioId = 1 // Horario estándar
+      // Sincronizar con mecánico si el rol actual o nuevo es mecánico (rol_id = 3)
+      if (rolActual === 3 || rol_id === 3) {
+        const [mecanicoExists] = await connection.query("SELECT id FROM mecanico WHERE id = ?", [id])
 
+        if (mecanicoExists.length > 0) {
+          // Actualizar mecánico existente
           await connection.query(
-            `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-             ON DUPLICATE KEY UPDATE 
-             nombre = VALUES(nombre), apellido = VALUES(apellido), tipo_documento = VALUES(tipo_documento),
-             documento = VALUES(documento), direccion = VALUES(direccion), telefono = VALUES(telefono),
-             telefono_emergencia = VALUES(telefono_emergencia), estado = VALUES(estado)`,
-            [id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono, estado, horarioId],
+            `UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, telefono = ?, direccion = ?, correo = ?, estado = ?, telefono_emergencia = ? WHERE id = ?`,
+            [
+              nombre,
+              apellido,
+              tipo_documento,
+              documento,
+              telefono,
+              direccion,
+              correo,
+              estado,
+              telefono_emergencia || telefono,
+              id,
+            ],
           )
+        } else if (rol_id === 3) {
+          // Crear nuevo mecánico
+          await connection.query(
+            `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              id,
+              nombre,
+              apellido,
+              tipo_documento,
+              documento,
+              direccion,
+              telefono,
+              telefono_emergencia || telefono,
+              correo,
+              estado || "Activo",
+            ],
+          )
+        }
+      }
+
+      // Eliminar registros si cambió de rol
+      if (rolActual !== rol_id) {
+        if (rolActual === 4 && rol_id !== 4) {
+          // Ya no es cliente, eliminar de tabla cliente
+          await connection.query("DELETE FROM cliente WHERE id = ?", [id])
+        }
+        if (rolActual === 3 && rol_id !== 3) {
+          // Ya no es mecánico, eliminar de tabla mecánico
+          await connection.query("DELETE FROM mecanico WHERE id = ?", [id])
         }
       }
 
@@ -101,7 +148,22 @@ const UsuarioModel = {
   },
 
   async delete(id) {
-    await db.query("DELETE FROM usuario WHERE id = ?", [id])
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      // Eliminar de todas las tablas relacionadas
+      await connection.query("DELETE FROM cliente WHERE id = ?", [id])
+      await connection.query("DELETE FROM mecanico WHERE id = ?", [id])
+      await connection.query("DELETE FROM usuario WHERE id = ?", [id])
+
+      await connection.commit()
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 
   async updatePassword(id, password) {
@@ -109,9 +171,28 @@ const UsuarioModel = {
   },
 
   async cambiarEstado(id, estado) {
-    await db.query("UPDATE usuario SET estado = ? WHERE id = ?", [estado, id])
-    await db.query("UPDATE cliente SET estado = ? WHERE id = ?", [estado, id])
-    await db.query("UPDATE mecanico SET estado = ? WHERE id = ?", [estado, id])
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      // Cambiar estado en todas las tablas relacionadas
+      await connection.query("UPDATE usuario SET estado = ? WHERE id = ?", [estado, id])
+      await connection.query("UPDATE cliente SET estado = ? WHERE id = ? AND id IN (SELECT id FROM cliente)", [
+        estado,
+        id,
+      ])
+      await connection.query("UPDATE mecanico SET estado = ? WHERE id = ? AND id IN (SELECT id FROM mecanico)", [
+        estado,
+        id,
+      ])
+
+      await connection.commit()
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 }
 

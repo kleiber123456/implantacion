@@ -24,11 +24,11 @@ const AuthService = {
 
     try {
       const hashed = await bcrypt.hash(data.password, 10)
-      const rol = data.rol_id || 4 // Valor predeterminado: 4
+      const rol = data.rol_id || 4 // Valor predeterminado: 2 (Cliente)
 
-      // Insertar en usuario con teléfono y dirección
+      // Insertar en usuario
       const [usuarioResult] = await connection.query(
-        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           data.nombre,
           data.apellido,
@@ -39,12 +39,13 @@ const AuthService = {
           rol,
           data.telefono,
           data.direccion,
+          "Activo",
         ],
       )
 
       const usuarioId = usuarioResult.insertId
 
-      // Si el rol es de cliente (asumiendo que el ID de rol cliente es 2)
+      // Si el rol es de cliente (ID 2)
       if (rol === 4) {
         await connection.query(
           "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -62,13 +63,10 @@ const AuthService = {
         )
       }
 
-      // Si el rol es de mecánico (asumiendo que el ID de rol mecánico es 3)
+      // Si el rol es de mecánico (ID 3)
       if (rol === 3) {
-        // Para mecánicos, usar horario estándar (ID 1 = Lunes, pero trabajan todos los días)
-        const horarioId = 1 // Horario estándar de Lunes
-
         await connection.query(
-          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, horario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             usuarioId,
             data.nombre,
@@ -77,9 +75,9 @@ const AuthService = {
             data.documento,
             data.direccion,
             data.telefono,
-            data.telefono_emergencia || data.telefono, // Si no hay teléfono de emergencia, usar el principal
+            data.telefono_emergencia || data.telefono,
+            data.correo,
             "Activo",
-            horarioId,
           ],
         )
       }
@@ -108,7 +106,7 @@ const AuthService = {
                   </a>
                 </div>
                 <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-                  Si tienes alguna pregunta, no dudes en visitar nuestra <a href="[ENLACE A TU SECCIÓN DE AYUDA]" style="color: #2563eb;">sección de ayuda</a>.
+                  Si tienes alguna pregunta, no dudes en contactarnos.
                 </p>
               </div>
               <div style="background-color: #f3f4f6; text-align: center; padding: 20px;">
@@ -160,9 +158,6 @@ const AuthService = {
               </div>
               <p style="color: #dc2626; font-size: 14px;">
                 Si no solicitaste este cambio de contraseña, por favor ignora este correo. Tu cuenta permanece segura.
-              </p>
-              <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
-                Si tienes algún problema o no solicitaste esta recuperación, contacta a nuestro equipo de soporte a través de <a href="mailto:[soportemotortega@gmail.com]" style="color: #2563eb;">[soportemotortega@gmail.com]</a>.
               </p>
             </div>
             <div style="background-color: #f3f4f6; text-align: center; padding: 20px;">

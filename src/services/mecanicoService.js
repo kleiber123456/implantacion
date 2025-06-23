@@ -15,7 +15,14 @@ const MecanicoService = {
     }
 
     // Validar que el tipo de documento sea válido
-    const tiposValidos = ["Cédula de ciudadanía", "Tarjeta de identidad"]
+    const tiposValidos = [
+      "Cédula de ciudadanía",
+      "Tarjeta de identidad",
+      "Cédula de extranjería",
+      "Pasaporte",
+      "NIT",
+      "Otro",
+    ]
     if (!tiposValidos.includes(data.tipo_documento)) {
       throw new Error("Tipo de documento no válido")
     }
@@ -41,7 +48,14 @@ const MecanicoService = {
     }
 
     // Validar que el tipo de documento sea válido
-    const tiposValidos = ["Cédula de ciudadanía", "Tarjeta de identidad"]
+    const tiposValidos = [
+      "Cédula de ciudadanía",
+      "Tarjeta de identidad",
+      "Cédula de extranjería",
+      "Pasaporte",
+      "NIT",
+      "Otro",
+    ]
     if (!tiposValidos.includes(data.tipo_documento)) {
       throw new Error("Tipo de documento no válido")
     }
@@ -67,11 +81,7 @@ const MecanicoService = {
 
   obtenerCitas: (id) => MecanicoModel.getCitasByMecanico(id),
 
-  // MÉTODO ELIMINADO: obtenerNovedades ya no es necesario
-  // obtenerNovedades: (id) => MecanicoModel.getNovedadesByMecanico(id),
-
-  // Nuevo método para obtener estadísticas del mecánico
   obtenerEstadisticas: (id) => MecanicoModel.getEstadisticasByMecanico(id),
 }
 
-module.exports = MecanicoService
+module.exports = MecanicoService

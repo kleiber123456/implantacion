@@ -1,5 +1,6 @@
 // src/controllers/citaController.js
 const CitaService = require("../services/citaService")
+const HistorialCitaModel = require("../models/historialCitaModel")
 
 const CitaController = {
   async listar(req, res) {
@@ -106,6 +107,33 @@ const CitaController = {
       res.json(mecanicosDisponibles)
     } catch (error) {
       res.status(500).json({ error: "Error al verificar la disponibilidad de mecánicos" })
+    }
+  },
+
+  async obtenerHistorial(req, res) {
+    try {
+      const historial = await HistorialCitaModel.obtenerPorCita(req.params.id)
+      res.json(historial)
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener el historial de la cita" })
+    }
+  },
+
+  async obtenerHistorialPorCliente(req, res) {
+    try {
+      const historial = await HistorialCitaModel.obtenerPorCliente(req.params.clienteId)
+      res.json(historial)
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener el historial del cliente" })
+    }
+  },
+
+  async obtenerHistorialPorVehiculo(req, res) {
+    try {
+      const historial = await HistorialCitaModel.obtenerPorVehiculo(req.params.vehiculoId)
+      res.json(historial)
+    } catch (error) {
+      res.status(500).json({ error: "Error al obtener el historial del vehículo" })
     }
   },
 }

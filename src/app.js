@@ -1,4 +1,3 @@
-// src/app.js
 const express = require("express")
 const cors = require("cors")
 
@@ -54,7 +53,7 @@ app.use("/api/citas", citaRoutes)
 app.get("/", (req, res) => {
   res.json({
     message: "Bienvenido a la API del Taller MotOrtega",
-    version: "3.0.0 - Sistema de novedades/excepciones para horarios",
+    version: "4.0.0 - Sistema completo de historial y vinculación venta-cita",
     endpoints: {
       // Autenticación
       login: "/api/auth/login (POST)",
@@ -68,7 +67,7 @@ app.get("/", (req, res) => {
 
       // Cambios de estado
       cambiarEstadoUsuario: "/api/usuarios/:id/cambiar-estado (PUT)",
-      cambiarEstadoRol: "/api/roles/:id/cambiar-estado (PUT)", // <-- Agregado aquí
+      cambiarEstadoRol: "/api/roles/:id/cambiar-estado (PUT)",
       cambiarEstadoProveedor: "/api/proveedores/:id/cambiar-estado (PUT)",
       cambiarEstadoServicio: "/api/servicios/:id/cambiar-estado (PUT)",
       cambiarEstadoRepuesto: "/api/repuestos/:id/cambiar-estado (PUT)",
@@ -104,7 +103,7 @@ app.get("/", (req, res) => {
       estadosVenta: "/api/estados-venta",
       estadosCita: "/api/estados-cita",
 
-      // HORARIOS - NUEVO SISTEMA DE NOVEDADES/EXCEPCIONES
+      // HORARIOS - Sistema de novedades/excepciones
       horarios: "/api/horarios (GET/POST)",
       horariosPorMecanico: "/api/horarios/mecanico/:mecanicoId (GET)",
       horariosPorFecha: "/api/horarios/fecha/:fecha (GET)",
@@ -116,24 +115,107 @@ app.get("/", (req, res) => {
       mecanicosPorEstado: "/api/mecanicos/estado/:estado (GET)",
       cambiarEstadoMecanico: "/api/mecanicos/:id/cambiar-estado (PUT)",
       citasPorMecanico: "/api/mecanicos/:id/citas (GET)",
-      novedadesPorMecanico: "/api/mecanicos/:id/novedades (GET)",
+      estadisticasMecanico: "/api/mecanicos/:id/estadisticas (GET)",
 
-      // Ventas
-      ventas: "/api/ventas",
+      // VENTAS - Sistema completo con historial
+      ventas: "/api/ventas (GET/POST)",
       ventasPorCliente: "/api/ventas/cliente/:clienteId (GET)",
       ventasPorEstado: "/api/ventas/estado/:estadoId (GET)",
       ventasPorRango: "/api/ventas/rango?fechaInicio=&fechaFin= (GET)",
       cambiarEstadoVenta: "/api/ventas/:id/cambiar-estado (PUT)",
+      vincularVentaCita: "/api/ventas/:id/vincular-cita (POST)",
 
-      // CITAS - ACTUALIZADO PARA SISTEMA DE NOVEDADES
-      citas: "/api/citas",
+      // HISTORIAL DE VENTAS
+      historialVenta: "/api/ventas/:id/historial (GET)",
+      historialVentasPorCliente: "/api/ventas/historial/cliente/:clienteId (GET)",
+      historialVentasPorVehiculo: "/api/ventas/historial/vehiculo/:vehiculoId (GET)",
+
+      // CITAS - Sistema actualizado con historial
+      citas: "/api/citas (GET/POST)",
       citasPorCliente: "/api/citas/cliente/:clienteId (GET)",
       citasPorMecanico: "/api/citas/mecanico/:mecanicoId (GET)",
       citasPorFecha: "/api/citas/fecha/:fecha (GET)",
       citasPorEstado: "/api/citas/estado/:estadoId (GET)",
       disponibilidadMecanicos: "/api/citas/disponibilidad/mecanicos?fecha=&hora= (GET)",
       cambiarEstadoCita: "/api/citas/:id/cambiar-estado (PUT)",
+
+      // HISTORIAL DE CITAS
+      historialCita: "/api/citas/:id/historial (GET)",
+      historialCitasPorCliente: "/api/citas/historial/cliente/:clienteId (GET)",
+      historialCitasPorVehiculo: "/api/citas/historial/vehiculo/:vehiculoId (GET)",
     },
+
+    // Información del sistema de estados
+    sistemasEstados: {
+      ventasCitas: {
+        descripcion: "Sistema de sincronización automática entre ventas y citas",
+        estadosVenta: {
+          1: "Pendiente",
+          2: "Pagada",
+          3: "Cancelada",
+        },
+        estadosCita: {
+          1: "Programada",
+          2: "En Proceso",
+          3: "Completada",
+          4: "Cancelada",
+        },
+        sincronizacion: {
+          "Venta Pendiente": "Cita En Proceso",
+          "Venta Pagada": "Cita Completada",
+          "Venta Cancelada": "Cita Cancelada",
+        },
+      },
+    },
+
+    // Información del sistema de historial
+    sistemaHistorial: {
+      descripcion: "Sistema completo de trazabilidad y historial",
+      caracteristicas: [
+        "Historial detallado de ventas con servicios y repuestos",
+        "Historial completo de citas con cambios de estado",
+        "Vinculación automática y manual entre ventas y citas",
+        "Filtros por cliente, vehículo, fecha y estado",
+        "Trazabilidad completa de todas las operaciones",
+      ],
+      filtrosDisponibles: ["Por venta específica", "Por cliente", "Por vehículo", "Por rango de fechas", "Por estado"],
+    },
+
+    // Ejemplos de uso
+    ejemplosUso: {
+      ventaSinCita: {
+        descripcion: "Crear venta independiente sin vincular a cita",
+        endpoint: "POST /api/ventas",
+        ejemplo: {
+          cliente_id: 1,
+          estado_venta_id: 1,
+          mecanico_id: 2,
+          servicios: [{ servicio_id: 1 }],
+          repuestos: [{ repuesto_id: 1, cantidad: 2 }],
+        },
+      },
+      ventaConCita: {
+        descripcion: "Crear venta vinculada automáticamente a una cita",
+        endpoint: "POST /api/ventas",
+        ejemplo: {
+          cliente_id: 1,
+          estado_venta_id: 1,
+          mecanico_id: 2,
+          cita_id: 5,
+          servicios: [{ servicio_id: 1 }],
+          repuestos: [{ repuesto_id: 1, cantidad: 2 }],
+        },
+      },
+      vincularExistente: {
+        descripcion: "Vincular venta existente con cita",
+        endpoint: "POST /api/ventas/:id/vincular-cita",
+        ejemplo: {
+          cita_id: 5,
+          observaciones: "Vinculación manual",
+        },
+      },
+    },
+
     horariosTrabajo: {
       dias: "Lunes a Sábado",
       horario: "8:00 AM - 6:00 PM",

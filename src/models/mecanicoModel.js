@@ -3,43 +3,214 @@ const db = require("../config/db")
 
 const MecanicoModel = {
   findAll: async () => {
-    const [rows] = await db.query("SELECT * FROM mecanico")
+    const [rows] = await db.query(`
+      SELECT m.*, u.correo, u.password, u.rol_id 
+      FROM mecanico m
+      LEFT JOIN usuario u ON m.id = u.id
+    `)
     return rows
   },
 
   findById: async (id) => {
-    const [rows] = await db.query("SELECT * FROM mecanico WHERE id = ?", [id])
+    const [rows] = await db.query(
+      `
+      SELECT m.*, u.correo, u.password, u.rol_id 
+      FROM mecanico m
+      LEFT JOIN usuario u ON m.id = u.id
+      WHERE m.id = ?
+    `,
+      [id],
+    )
     return rows[0]
   },
 
   findByEstado: async (estado) => {
-    const [rows] = await db.query("SELECT * FROM mecanico WHERE estado = ?", [estado])
+    const [rows] = await db.query(
+      `
+      SELECT m.*, u.correo, u.password, u.rol_id 
+      FROM mecanico m
+      LEFT JOIN usuario u ON m.id = u.id
+      WHERE m.estado = ?
+    `,
+      [estado],
+    )
     return rows
   },
 
   create: async (data) => {
-    const { nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado } = data
-    const [result] = await db.query(
-      "INSERT INTO mecanico (nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado || "Activo"],
-    )
-    return result.insertId
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      const {
+        nombre,
+        apellido,
+        tipo_documento,
+        documento,
+        direccion,
+        telefono,
+        telefono_emergencia,
+        correo,
+        estado,
+        password,
+      } = data
+
+      let mecanicoId
+
+      if (data.id) {
+        // Si viene con ID específico (desde usuario)
+        mecanicoId = data.id
+        await connection.query(
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            mecanicoId,
+            nombre,
+            apellido,
+            tipo_documento,
+            documento,
+            direccion,
+            telefono,
+            telefono_emergencia,
+            correo,
+            estado || "Activo",
+          ],
+        )
+      } else {
+        // Crear nuevo mecánico independiente
+        const [result] = await connection.query(
+          "INSERT INTO mecanico (nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            nombre,
+            apellido,
+            tipo_documento,
+            documento,
+            direccion,
+            telefono,
+            telefono_emergencia,
+            correo,
+            estado || "Activo",
+          ],
+        )
+        mecanicoId = result.insertId
+      }
+
+      // Verificar si ya existe usuario con este ID
+      const [usuarioExists] = await connection.query("SELECT id FROM usuario WHERE id = ?", [mecanicoId])
+
+      if (usuarioExists.length === 0) {
+        // Crear usuario correspondiente
+        const hashedPassword = password
+          ? require("bcryptjs").hashSync(password, 10)
+          : require("bcryptjs").hashSync("123456", 10)
+
+        await connection.query(
+          "INSERT INTO usuario (id, nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            mecanicoId,
+            nombre,
+            apellido,
+            correo,
+            tipo_documento,
+            documento,
+            hashedPassword,
+            3,
+            telefono,
+            direccion,
+            estado || "Activo",
+          ],
+        )
+      } else {
+        // Actualizar usuario existente para que sea mecánico
+        await connection.query(
+          "UPDATE usuario SET nombre = ?, apellido = ?, correo = ?, tipo_documento = ?, documento = ?, rol_id = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?",
+          [nombre, apellido, correo, tipo_documento, documento, 3, telefono, direccion, estado || "Activo", mecanicoId],
+        )
+      }
+
+      await connection.commit()
+      return mecanicoId
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 
   update: async (id, data) => {
-    const { nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado } = data
-    await db.query(
-      "UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, direccion = ?, telefono = ?, telefono_emergencia = ?, estado = ? WHERE id = ?",
-      [nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, estado, id],
-    )
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      const { nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado } =
+        data
+
+      // Actualizar mecánico
+      await connection.query(
+        "UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, direccion = ?, telefono = ?, telefono_emergencia = ?, correo = ?, estado = ? WHERE id = ?",
+        [nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado, id],
+      )
+
+      // Sincronizar con usuario
+      const [usuarioExists] = await connection.query("SELECT id FROM usuario WHERE id = ?", [id])
+
+      if (usuarioExists.length > 0) {
+        await connection.query(
+          "UPDATE usuario SET nombre = ?, apellido = ?, correo = ?, tipo_documento = ?, documento = ?, telefono = ?, direccion = ?, estado = ?, rol_id = ? WHERE id = ?",
+          [nombre, apellido, correo, tipo_documento, documento, telefono, direccion, estado, 3, id],
+        )
+      } else {
+        // Crear usuario si no existe
+        const hashedPassword = require("bcryptjs").hashSync("123456", 10)
+        await connection.query(
+          "INSERT INTO usuario (id, nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [id, nombre, apellido, correo, tipo_documento, documento, hashedPassword, 3, telefono, direccion, estado],
+        )
+      }
+
+      await connection.commit()
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 
   delete: async (id) => {
-    await db.query("DELETE FROM mecanico WHERE id = ?", [id])
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      // Eliminar mecánico y usuario relacionado
+      await connection.query("DELETE FROM mecanico WHERE id = ?", [id])
+      await connection.query("DELETE FROM usuario WHERE id = ? AND rol_id = 3", [id])
+
+      await connection.commit()
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 
   cambiarEstado: async (id, estado) => {
-    await db.query("UPDATE mecanico SET estado = ? WHERE id = ?", [estado, id])
+    const connection = await db.getConnection()
+    await connection.beginTransaction()
+
+    try {
+      // Cambiar estado en ambas tablas
+      await connection.query("UPDATE mecanico SET estado = ? WHERE id = ?", [estado, id])
+      await connection.query("UPDATE usuario SET estado = ? WHERE id = ? AND rol_id = 3", [estado, id])
+
+      await connection.commit()
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
   },
 
   // Obtener las citas asignadas a un mecánico
@@ -63,13 +234,7 @@ const MecanicoModel = {
     return rows
   },
 
-  // MÉTODO ELIMINADO: getNovedadesByMecanico ya no es necesario
-  // porque los mecánicos ya no tienen horarios asignados
-
-  // Si necesitas obtener información adicional del mecánico,
-  // puedes agregar otros métodos aquí que no dependan de horarios
-
-  // Ejemplo: Obtener estadísticas del mecánico
+  // Obtener estadísticas del mecánico
   getEstadisticasByMecanico: async (mecanicoId) => {
     const [rows] = await db.query(
       `
@@ -88,4 +253,4 @@ const MecanicoModel = {
   },
 }
 
-module.exports = MecanicoModel
+module.exports = MecanicoModel
