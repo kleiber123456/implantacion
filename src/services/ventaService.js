@@ -129,7 +129,7 @@ const VentaService = {
             )
           }
 
-          const subtotal = cantidad * repuestoData.preciounitario
+          const subtotal = cantidad * repuestoData.precio_venta
           total += subtotal
 
           await VentaPorRepuestoModel.create({
@@ -141,7 +141,7 @@ const VentaService = {
 
           // Actualizar stock del repuesto
           const nuevaCantidad = repuestoData.cantidad - cantidad
-          const nuevoTotal = nuevaCantidad * repuestoData.preciounitario
+          const nuevoTotal = nuevaCantidad * repuestoData.precio_venta
 
           await RepuestoModel.update(repuesto_id, {
             ...repuestoData,
@@ -160,7 +160,7 @@ const VentaService = {
             repuesto_descripcion: repuestoData.descripcion,
             categoria_nombre: categoriaResult[0]?.nombre || "Sin categoría",
             cantidad,
-            precio_unitario: repuestoData.preciounitario,
+            precio_unitario: repuestoData.precio_venta,
             subtotal,
           })
         }
@@ -270,7 +270,7 @@ const VentaService = {
         const repuestoData = await RepuestoModel.findById(repuestoActual.repuesto_id)
         if (repuestoData) {
           const nuevaCantidad = repuestoData.cantidad + repuestoActual.cantidad
-          const nuevoTotal = nuevaCantidad * repuestoData.preciounitario
+          const nuevoTotal = nuevaCantidad * repuestoData.precio_venta
 
           await RepuestoModel.update(repuestoActual.repuesto_id, {
             ...repuestoData,
@@ -341,7 +341,7 @@ const VentaService = {
             )
           }
 
-          const subtotal = cantidad * repuestoData.preciounitario
+          const subtotal = cantidad * repuestoData.precio_venta
           total += subtotal
 
           await VentaPorRepuestoModel.create({
@@ -353,7 +353,7 @@ const VentaService = {
 
           // Actualizar stock del repuesto
           const nuevaCantidad = repuestoData.cantidad - cantidad
-          const nuevoTotal = nuevaCantidad * repuestoData.preciounitario
+          const nuevoTotal = nuevaCantidad * repuestoData.precio_venta
 
           await RepuestoModel.update(repuesto_id, {
             ...repuestoData,
@@ -372,7 +372,7 @@ const VentaService = {
             repuesto_descripcion: repuestoData.descripcion,
             categoria_nombre: categoriaResult[0]?.nombre || "Sin categoría",
             cantidad,
-            precio_unitario: repuestoData.preciounitario,
+            precio_unitario: repuestoData.precio_venta,
             subtotal,
           })
         }
@@ -486,7 +486,7 @@ const VentaService = {
         const repuestoData = await RepuestoModel.findById(repuesto.repuesto_id)
         if (repuestoData) {
           const nuevaCantidad = repuestoData.cantidad + repuesto.cantidad
-          const nuevoTotal = nuevaCantidad * repuestoData.preciounitario
+          const nuevoTotal = nuevaCantidad * repuestoData.precio_venta
 
           await RepuestoModel.update(repuesto.repuesto_id, {
             ...repuestoData,

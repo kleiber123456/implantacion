@@ -17,18 +17,18 @@ const RepuestoModel = {
   },
 
   create: async (data) => {
-    const { nombre, descripcion, cantidad, preciounitario, precio_compra, total, categoria_repuesto_id, estado } = data
+    const { nombre, descripcion, cantidad, precio_venta, precio_compra, total, categoria_repuesto_id, estado } = data
 
     const [result] = await db.query(
       `INSERT INTO repuesto 
-      (nombre, descripcion, cantidad, preciounitario, precio_compra, total, categoria_repuesto_id, estado) 
+      (nombre, descripcion, cantidad, precio_venta, precio_compra, total, categoria_repuesto_id, estado) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nombre,
         descripcion,
         cantidad,
-        preciounitario,
-        precio_compra || preciounitario,
+        precio_venta,
+        precio_compra || precio_venta,
         total,
         categoria_repuesto_id,
         estado,
@@ -39,14 +39,14 @@ const RepuestoModel = {
   },
 
   update: async (id, data) => {
-    const { nombre, descripcion, cantidad, preciounitario, precio_compra, total, categoria_repuesto_id, estado } = data
+    const { nombre, descripcion, cantidad, precio_venta, precio_compra, total, categoria_repuesto_id, estado } = data
 
     await db.query(
       `UPDATE repuesto 
-       SET nombre = ?, descripcion = ?, cantidad = ?, preciounitario = ?, precio_compra = ?, total = ?, 
+       SET nombre = ?, descripcion = ?, cantidad = ?, precio_venta = ?, precio_compra = ?, total = ?, 
            categoria_repuesto_id = ?, estado = ?
        WHERE id = ?`,
-      [nombre, descripcion, cantidad, preciounitario, precio_compra, total, categoria_repuesto_id, estado, id],
+      [nombre, descripcion, cantidad, precio_venta, precio_compra, total, categoria_repuesto_id, estado, id],
     )
   },
 

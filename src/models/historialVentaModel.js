@@ -77,7 +77,7 @@ const HistorialVentaModel = {
             `
             INSERT INTO historial_venta_repuesto 
             (historial_venta_id, repuesto_id, repuesto_nombre, repuesto_descripcion, 
-             categoria_nombre, cantidad, precio_unitario, subtotal)
+             categoria_nombre, cantidad, precio_venta, subtotal)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           `,
             [
@@ -87,7 +87,7 @@ const HistorialVentaModel = {
               repuesto.repuesto_descripcion,
               repuesto.categoria_nombre,
               repuesto.cantidad,
-              repuesto.precio_unitario,
+              repuesto.precio_venta,
               repuesto.subtotal,
             ],
           )
