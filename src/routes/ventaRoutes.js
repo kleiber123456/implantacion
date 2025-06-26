@@ -21,6 +21,7 @@ router.get("/:id", verifyToken, VentaController.obtener)
 // Rutas de modificación - requieren roles específicos
 router.post("/", verifyToken, authorizeRoles(1, 2), VentaController.crear)
 router.put("/:id", verifyToken, authorizeRoles(1, 2), VentaController.actualizar)
+router.get("/:id", verifyToken, authorizeRoles(1, 2), VentaController.obtener)
 
 // Vincular venta con cita
 router.post("/:id/vincular-cita", verifyToken, authorizeRoles(1, 2), VentaController.vincularConCita)
