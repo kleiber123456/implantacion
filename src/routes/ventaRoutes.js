@@ -10,18 +10,17 @@ router.get("/cliente/:clienteId", verifyToken, VentaController.obtenerPorCliente
 router.get("/estado/:estadoId", verifyToken, VentaController.obtenerPorEstado)
 router.get("/rango", verifyToken, VentaController.obtenerPorRangoFechas)
 
-// Rutas de historial
+// Rutas de historial - DEBEN IR ANTES de /:id
 router.get("/historial/cliente/:clienteId", verifyToken, VentaController.obtenerHistorialPorCliente)
 router.get("/historial/vehiculo/:vehiculoId", verifyToken, VentaController.obtenerHistorialPorVehiculo)
-router.get("/:id/historial", verifyToken, VentaController.obtenerHistorial)
 
-// Ruta específica debe ir después de las rutas con parámetros específicos
+// Ruta específica para obtener una venta por ID - DEBE IR DESPUÉS de las rutas específicas
 router.get("/:id", verifyToken, VentaController.obtener)
+router.get("/:id/historial", verifyToken, VentaController.obtenerHistorial)
 
 // Rutas de modificación - requieren roles específicos
 router.post("/", verifyToken, authorizeRoles(1, 2), VentaController.crear)
 router.put("/:id", verifyToken, authorizeRoles(1, 2), VentaController.actualizar)
-router.get("/:id", verifyToken, authorizeRoles(1, 2), VentaController.obtener)
 
 // Vincular venta con cita
 router.post("/:id/vincular-cita", verifyToken, authorizeRoles(1, 2), VentaController.vincularConCita)
