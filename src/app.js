@@ -94,10 +94,17 @@ app.get("/", (req, res) => {
 
       // Dashboard
       dashboard: "/api/dashboard",
-      estadisticas: "/api/dashboard/estadisticas (GET)",
-      serviciosActivos: "/api/dashboard/servicios-activos (GET)",
-      repuestosBajoStock: "/api/dashboard/repuestos-bajo-stock (GET)",
-      comprasRecientes: "/api/dashboard/compras-recientes (GET)",
+      estadisticasCompletas: "/api/dashboard/estadisticas (GET)",
+      ventasRecientes: "/api/dashboard/ventas-recientes (GET)",
+      citasHoy: "/api/dashboard/citas-hoy (GET)",
+      citasProximaSemana: "/api/dashboard/citas-proxima-semana (GET)",
+      topServicios: "/api/dashboard/top-servicios (GET)",
+      topRepuestos: "/api/dashboard/top-repuestos (GET)",
+      mecanicosActivos: "/api/dashboard/mecanicos-activos (GET)",
+      clientesFrecuentes: "/api/dashboard/clientes-frecuentes (GET)",
+      tendenciasVentas: "/api/dashboard/tendencias-ventas?año=2024 (GET)",
+      tendenciasCitas: "/api/dashboard/tendencias-citas?año=2024 (GET)",
+      tendenciasCompras: "/api/dashboard/tendencias-compras?año=2024 (GET)",
 
       // Estados
       estadosVenta: "/api/estados-venta",
