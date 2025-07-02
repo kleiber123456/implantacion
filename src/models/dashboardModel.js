@@ -174,8 +174,8 @@ const DashboardModel = {
   async obtenerRepuestosCriticos() {
     const [rows] = await db.query(
       `SELECT r.id, r.nombre, r.descripcion, r.cantidad, r.precio_venta, r.precio_compra,
-              r.categoria_repuesto_id, r.fecha_creacion, r.fecha_actualizacion,
-              c.nombre as categoria_nombre, c.descripcion as categoria_descripcion
+              r.categoria_repuesto_id, r.estado,
+              c.nombre as categoria_nombre
        FROM repuesto r
        JOIN categoria_repuesto c ON r.categoria_repuesto_id = c.id
        WHERE r.estado = 'Activo' AND r.cantidad = 0
