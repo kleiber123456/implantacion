@@ -17,14 +17,24 @@ const VentaCitaModel = {
     const [rows] = await db.query(
       `
       SELECT vc.*, c.*, ec.nombre as estado_cita_nombre,
-             v.placa as vehiculo_placa, cl.nombre as cliente_nombre, cl.apellido as cliente_apellido,
-             m.nombre as mecanico_nombre, m.apellido as mecanico_apellido
+             v.placa as vehiculo_placa, 
+             v.color as vehiculo_color,
+             cl.nombre as cliente_nombre, 
+             cl.apellido as cliente_apellido,
+             cl.documento as cliente_documento,
+             cl.tipo_documento as cliente_tipo_documento,
+             m.nombre as mecanico_nombre, 
+             m.apellido as mecanico_apellido,
+             r.nombre as referencia_nombre,
+             ma.nombre as marca_nombre
       FROM venta_cita vc
       JOIN cita c ON vc.cita_id = c.id
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE vc.venta_id = ?
     `,
       [ventaId],
@@ -37,7 +47,10 @@ const VentaCitaModel = {
     const [rows] = await db.query(
       `
       SELECT vc.*, v.*, ev.nombre as estado_venta_nombre,
-             cl.nombre as cliente_nombre, cl.apellido as cliente_apellido
+             cl.nombre as cliente_nombre, 
+             cl.apellido as cliente_apellido,
+             cl.documento as cliente_documento,
+             cl.tipo_documento as cliente_tipo_documento
       FROM venta_cita vc
       JOIN venta v ON vc.venta_id = v.id
       JOIN estado_venta ev ON v.estado_venta_id = ev.id

@@ -7,15 +7,22 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
+             cl.documento AS cliente_documento,
+             cl.tipo_documento AS cliente_tipo_documento,
              m.nombre AS mecanico_nombre,
-             m.apellido AS mecanico_apellido
+             m.apellido AS mecanico_apellido,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       ORDER BY c.fecha DESC, c.hora
     `)
     return rows
@@ -27,15 +34,24 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
+             cl.documento AS cliente_documento,
+             cl.tipo_documento AS cliente_tipo_documento,
+             cl.correo AS cliente_correo,
+             cl.telefono AS cliente_telefono,
              m.nombre AS mecanico_nombre,
-             m.apellido AS mecanico_apellido
+             m.apellido AS mecanico_apellido,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE c.id = ?
     `,
       [id],
@@ -49,12 +65,17 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              m.nombre AS mecanico_nombre,
-             m.apellido AS mecanico_apellido
+             m.apellido AS mecanico_apellido,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE v.cliente_id = ?
       ORDER BY c.fecha DESC, c.hora
     `,
@@ -69,12 +90,19 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              cl.nombre AS cliente_nombre,
-             cl.apellido AS cliente_apellido
+             cl.apellido AS cliente_apellido,
+             cl.documento AS cliente_documento,
+             cl.tipo_documento AS cliente_tipo_documento,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE c.mecanico_id = ?
       ORDER BY c.fecha DESC, c.hora
     `,
@@ -89,15 +117,22 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
+             cl.documento AS cliente_documento,
+             cl.tipo_documento AS cliente_tipo_documento,
              m.nombre AS mecanico_nombre,
-             m.apellido AS mecanico_apellido
+             m.apellido AS mecanico_apellido,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE c.fecha = ?
       ORDER BY c.hora
     `,
@@ -112,15 +147,22 @@ const CitaModel = {
       SELECT c.*, 
              ec.nombre AS estado_nombre,
              v.placa AS vehiculo_placa,
+             v.color AS vehiculo_color,
              cl.nombre AS cliente_nombre,
              cl.apellido AS cliente_apellido,
+             cl.documento AS cliente_documento,
+             cl.tipo_documento AS cliente_tipo_documento,
              m.nombre AS mecanico_nombre,
-             m.apellido AS mecanico_apellido
+             m.apellido AS mecanico_apellido,
+             r.nombre AS referencia_nombre,
+             ma.nombre AS marca_nombre
       FROM cita c
       JOIN estado_cita ec ON c.estado_cita_id = ec.id
       JOIN vehiculo v ON c.vehiculo_id = v.id
       JOIN cliente cl ON v.cliente_id = cl.id
       JOIN mecanico m ON c.mecanico_id = m.id
+      JOIN referencia r ON v.referencia_id = r.id
+      JOIN marca ma ON r.marca_id = ma.id
       WHERE c.estado_cita_id = ?
       ORDER BY c.fecha DESC, c.hora
     `,
