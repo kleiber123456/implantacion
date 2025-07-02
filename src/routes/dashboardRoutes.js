@@ -10,6 +10,10 @@ router.get("/estadisticas", verifyToken, DashboardController.getEstadisticas)
 // Datos básicos
 router.get("/servicios-activos", verifyToken, DashboardController.getServiciosActivos)
 router.get("/repuestos-bajo-stock", verifyToken, DashboardController.getRepuestosBajoStock)
+
+// ============ NUEVO: REPUESTOS CRÍTICOS ============
+router.get("/repuestos-criticos", verifyToken, DashboardController.getRepuestosCriticos)
+
 router.get("/compras-recientes", verifyToken, DashboardController.getComprasRecientes)
 router.get("/ventas-recientes", verifyToken, DashboardController.getVentasRecientes)
 

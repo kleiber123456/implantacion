@@ -113,6 +113,11 @@ const DashboardService = {
     return await DashboardModel.obtenerRepuestosBajoStock(limite)
   },
 
+  // ============ NUEVO: REPUESTOS CRÍTICOS ============
+  async obtenerRepuestosCriticos() {
+    return await DashboardModel.obtenerRepuestosCriticos()
+  },
+
   async obtenerComprasRecientes(limite = 5) {
     return await DashboardModel.obtenerComprasRecientes(limite)
   },

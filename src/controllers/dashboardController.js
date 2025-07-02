@@ -33,6 +33,17 @@ const DashboardController = {
     }
   },
 
+  // ============ NUEVO: REPUESTOS CRÍTICOS ============
+  async getRepuestosCriticos(req, res) {
+    try {
+      const repuestos = await DashboardService.obtenerRepuestosCriticos()
+      res.json(repuestos)
+    } catch (error) {
+      console.error("Error al obtener repuestos críticos:", error)
+      res.status(500).json({ error: "Error al obtener los repuestos críticos (stock = 0)" })
+    }
+  },
+
   async getComprasRecientes(req, res) {
     try {
       const limite = Number.parseInt(req.query.limite) || 5
