@@ -1,5 +1,5 @@
 // src/models/usuarioModel.js
-const pool = require("../config/db")
+const { pool } = require("../config/db")
 
 const UsuarioModel = {
   async findAll() {
