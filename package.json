@@ -2,9 +2,10 @@
   "name": "api_final",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",
@@ -17,9 +18,9 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.1",
-    "node": "^24.2.0",
     "nodemailer": "^6.10.1",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
