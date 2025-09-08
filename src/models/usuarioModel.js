@@ -30,34 +30,14 @@ const UsuarioModel = {
   },
 
   async create(usuario) {
-    const {
-      nombre,
-      apellido,
-      tipo_documento,
-      documento,
-      correo,
-      password,
-      rol_id,
-      telefono,
-      direccion,
-    } = usuario
+    const { nombre, apellido, tipo_documento, documento, correo, password, rol_id, telefono, direccion } = usuario
 
     const query = `
-      INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion)
+      INSERT INTO usuario (nombre, apellido, tipo_documento, documento, correo, password, rol_id, telefono, direccion)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING id
     `
-    const values = [
-      nombre,
-      apellido,
-      correo,
-      tipo_documento,
-      documento,
-      password,
-      rol_id,
-      telefono,
-      direccion,
-    ]
+    const values = [nombre, apellido, tipo_documento, documento, correo, password, rol_id, telefono, direccion]
     const result = await pool.query(query, values)
     return result.rows[0].id
   },
@@ -89,7 +69,7 @@ const UsuarioModel = {
         `UPDATE usuario 
          SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, correo=$5, telefono=$6, direccion=$7, estado=$8, rol_id=$9 
          WHERE id=$10`,
-        [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id]
+        [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id],
       )
 
       // Cliente (rol_id = 4)
@@ -100,13 +80,13 @@ const UsuarioModel = {
             `UPDATE cliente 
              SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, correo=$5, telefono=$6, direccion=$7, estado=$8 
              WHERE id=$9`,
-            [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id]
+            [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id],
           )
         } else if (rol_id === 4) {
           await client.query(
             `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado || "Activo"]
+            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado || "Activo"],
           )
         }
       }
@@ -119,13 +99,35 @@ const UsuarioModel = {
             `UPDATE mecanico 
              SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, telefono=$5, direccion=$6, correo=$7, estado=$8, telefono_emergencia=$9 
              WHERE id=$10`,
-            [nombre, apellido, tipo_documento, documento, telefono, direccion, correo, estado, telefono_emergencia || telefono, id]
+            [
+              nombre,
+              apellido,
+              tipo_documento,
+              documento,
+              telefono,
+              direccion,
+              correo,
+              estado,
+              telefono_emergencia || telefono,
+              id,
+            ],
           )
         } else if (rol_id === 3) {
           await client.query(
             `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado)
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-            [id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia || telefono, correo, estado || "Activo"]
+            [
+              id,
+              nombre,
+              apellido,
+              tipo_documento,
+              documento,
+              direccion,
+              telefono,
+              telefono_emergencia || telefono,
+              correo,
+              estado || "Activo",
+            ],
           )
         }
       }
