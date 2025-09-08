@@ -1,48 +1,72 @@
 // src/models/usuarioModel.js
-const db = require("../config/db")
+const pool = require("../config/db")
 
 const UsuarioModel = {
   async findAll() {
-    const [rows] = await db.query(`
+    const query = `
       SELECT u.*, r.nombre AS rol_nombre
       FROM usuario u
       JOIN rol r ON u.rol_id = r.id
-    `)
-    return rows
+    `
+    const result = await pool.query(query)
+    return result.rows
   },
 
   async findById(id) {
-    const [rows] = await db.query("SELECT * FROM usuario WHERE id = ?", [id])
-    return rows[0]
+    const query = "SELECT * FROM usuario WHERE id = $1"
+    const result = await pool.query(query, [id])
+    return result.rows[0] || null
   },
 
   async findByEmail(correo) {
-    const [rows] = await db.query(
-      `
+    const query = `
       SELECT u.*, r.nombre AS rol
       FROM usuario u
       JOIN rol r ON u.rol_id = r.id
-      WHERE u.correo = ?
-    `,
-      [correo],
-    )
-    return rows[0]
+      WHERE u.correo = $1
+    `
+    const result = await pool.query(query, [correo])
+    return result.rows[0] || null
   },
 
   async create(usuario) {
-    const { nombre, apellido, tipo_documento, documento, correo, password, rol_id, telefono, direccion } = usuario
-    const [result] = await db.query(
-      "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion],
-    )
-    return result.insertId
+    const {
+      nombre,
+      apellido,
+      tipo_documento,
+      documento,
+      correo,
+      password,
+      rol_id,
+      telefono,
+      direccion,
+    } = usuario
+
+    const query = `
+      INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      RETURNING id
+    `
+    const values = [
+      nombre,
+      apellido,
+      correo,
+      tipo_documento,
+      documento,
+      password,
+      rol_id,
+      telefono,
+      direccion,
+    ]
+    const result = await pool.query(query, values)
+    return result.rows[0].id
   },
 
   async update(id, usuario) {
-    const connection = await db.getConnection()
-    await connection.beginTransaction()
-
+    const client = await pool.connect()
     try {
+      await client.query("BEGIN")
+
       const {
         nombre,
         apellido,
@@ -57,71 +81,51 @@ const UsuarioModel = {
       } = usuario
 
       // Obtener datos actuales del usuario
-      const [userData] = await connection.query("SELECT rol_id FROM usuario WHERE id = ?", [id])
-      const rolActual = userData[0]?.rol_id
+      const userData = await client.query("SELECT rol_id FROM usuario WHERE id = $1", [id])
+      const rolActual = userData.rows[0]?.rol_id
 
       // Actualizar usuario principal
-      await connection.query(
-        `UPDATE usuario SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ?, rol_id = ? WHERE id = ?`,
-        [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id],
+      await client.query(
+        `UPDATE usuario 
+         SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, correo=$5, telefono=$6, direccion=$7, estado=$8, rol_id=$9 
+         WHERE id=$10`,
+        [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, rol_id, id]
       )
 
-      // Sincronizar con cliente si el rol actual o nuevo es cliente (rol_id = 2)
-      if (rolActual === 2 || rol_id === 4) {
-        const [clienteExists] = await connection.query("SELECT id FROM cliente WHERE id = ?", [id])
-
-        if (clienteExists.length > 0) {
-          // Actualizar cliente existente
-          await connection.query(
-            `UPDATE cliente SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, estado = ? WHERE id = ?`,
-            [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id],
+      // Cliente (rol_id = 4)
+      if (rolActual === 4 || rol_id === 4) {
+        const clienteExists = await client.query("SELECT id FROM cliente WHERE id = $1", [id])
+        if (clienteExists.rows.length > 0) {
+          await client.query(
+            `UPDATE cliente 
+             SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, correo=$5, telefono=$6, direccion=$7, estado=$8 
+             WHERE id=$9`,
+            [nombre, apellido, tipo_documento, documento, correo, telefono, direccion, estado, id]
           )
         } else if (rol_id === 4) {
-          // Crear nuevo cliente
-          await connection.query(
-            `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado || "Activo"],
+          await client.query(
+            `INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            [id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado || "Activo"]
           )
         }
       }
 
-      // Sincronizar con mecánico si el rol actual o nuevo es mecánico (rol_id = 3)
+      // Mecánico (rol_id = 3)
       if (rolActual === 3 || rol_id === 3) {
-        const [mecanicoExists] = await connection.query("SELECT id FROM mecanico WHERE id = ?", [id])
-
-        if (mecanicoExists.length > 0) {
-          // Actualizar mecánico existente
-          await connection.query(
-            `UPDATE mecanico SET nombre = ?, apellido = ?, tipo_documento = ?, documento = ?, telefono = ?, direccion = ?, correo = ?, estado = ?, telefono_emergencia = ? WHERE id = ?`,
-            [
-              nombre,
-              apellido,
-              tipo_documento,
-              documento,
-              telefono,
-              direccion,
-              correo,
-              estado,
-              telefono_emergencia || telefono,
-              id,
-            ],
+        const mecanicoExists = await client.query("SELECT id FROM mecanico WHERE id = $1", [id])
+        if (mecanicoExists.rows.length > 0) {
+          await client.query(
+            `UPDATE mecanico 
+             SET nombre=$1, apellido=$2, tipo_documento=$3, documento=$4, telefono=$5, direccion=$6, correo=$7, estado=$8, telefono_emergencia=$9 
+             WHERE id=$10`,
+            [nombre, apellido, tipo_documento, documento, telefono, direccion, correo, estado, telefono_emergencia || telefono, id]
           )
         } else if (rol_id === 3) {
-          // Crear nuevo mecánico
-          await connection.query(
-            `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              id,
-              nombre,
-              apellido,
-              tipo_documento,
-              documento,
-              direccion,
-              telefono,
-              telefono_emergencia || telefono,
-              correo,
-              estado || "Activo",
-            ],
+          await client.query(
+            `INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+            [id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia || telefono, correo, estado || "Activo"]
           )
         }
       }
@@ -129,69 +133,59 @@ const UsuarioModel = {
       // Eliminar registros si cambió de rol
       if (rolActual !== rol_id) {
         if (rolActual === 4 && rol_id !== 4) {
-          // Ya no es cliente, eliminar de tabla cliente
-          await connection.query("DELETE FROM cliente WHERE id = ?", [id])
+          await client.query("DELETE FROM cliente WHERE id = $1", [id])
         }
         if (rolActual === 3 && rol_id !== 3) {
-          // Ya no es mecánico, eliminar de tabla mecánico
-          await connection.query("DELETE FROM mecanico WHERE id = ?", [id])
+          await client.query("DELETE FROM mecanico WHERE id = $1", [id])
         }
       }
 
-      await connection.commit()
+      await client.query("COMMIT")
     } catch (error) {
-      await connection.rollback()
+      await client.query("ROLLBACK")
       throw error
     } finally {
-      connection.release()
+      client.release()
     }
   },
 
   async delete(id) {
-    const connection = await db.getConnection()
-    await connection.beginTransaction()
-
+    const client = await pool.connect()
     try {
-      // Eliminar de todas las tablas relacionadas
-      await connection.query("DELETE FROM cliente WHERE id = ?", [id])
-      await connection.query("DELETE FROM mecanico WHERE id = ?", [id])
-      await connection.query("DELETE FROM usuario WHERE id = ?", [id])
+      await client.query("BEGIN")
 
-      await connection.commit()
+      await client.query("DELETE FROM cliente WHERE id = $1", [id])
+      await client.query("DELETE FROM mecanico WHERE id = $1", [id])
+      await client.query("DELETE FROM usuario WHERE id = $1", [id])
+
+      await client.query("COMMIT")
     } catch (error) {
-      await connection.rollback()
+      await client.query("ROLLBACK")
       throw error
     } finally {
-      connection.release()
+      client.release()
     }
   },
 
   async updatePassword(id, password) {
-    await db.query("UPDATE usuario SET password = ? WHERE id = ?", [password, id])
+    await pool.query("UPDATE usuario SET password = $1 WHERE id = $2", [password, id])
   },
 
   async cambiarEstado(id, estado) {
-    const connection = await db.getConnection()
-    await connection.beginTransaction()
-
+    const client = await pool.connect()
     try {
-      // Cambiar estado en todas las tablas relacionadas
-      await connection.query("UPDATE usuario SET estado = ? WHERE id = ?", [estado, id])
-      await connection.query("UPDATE cliente SET estado = ? WHERE id = ? AND id IN (SELECT id FROM cliente)", [
-        estado,
-        id,
-      ])
-      await connection.query("UPDATE mecanico SET estado = ? WHERE id = ? AND id IN (SELECT id FROM mecanico)", [
-        estado,
-        id,
-      ])
+      await client.query("BEGIN")
 
-      await connection.commit()
+      await client.query("UPDATE usuario SET estado = $1 WHERE id = $2", [estado, id])
+      await client.query("UPDATE cliente SET estado = $1 WHERE id = $2", [estado, id])
+      await client.query("UPDATE mecanico SET estado = $1 WHERE id = $2", [estado, id])
+
+      await client.query("COMMIT")
     } catch (error) {
-      await connection.rollback()
+      await client.query("ROLLBACK")
       throw error
     } finally {
-      connection.release()
+      client.release()
     }
   },
 }
