@@ -21,4 +21,4 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-module.exports = { verifyToken, authorizeRoles };
+module.exports = { authorizeRoles };

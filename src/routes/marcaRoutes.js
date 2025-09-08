@@ -2,12 +2,12 @@
 const express = require("express")
 const router = express.Router()
 const MarcaController = require("../controllers/marcaController")
-const { verifyToken, authorizeRoles } = require("../middlewares/authMiddleware")
+const { authorizeRoles } = require("../middlewares/authMiddleware")
 
-router.get("/", verifyToken, MarcaController.listar)
-router.get("/:id", verifyToken, MarcaController.obtener)
-router.post("/", verifyToken, authorizeRoles(1), MarcaController.crear)
-router.put("/:id", verifyToken, authorizeRoles(1), MarcaController.actualizar)
-router.delete("/:id", verifyToken, authorizeRoles(1), MarcaController.eliminar)
+router.get("/", MarcaController.listar)
+router.get("/:id", MarcaController.obtener)
+router.post("/", authorizeRoles(1), MarcaController.crear)
+router.put("/:id", authorizeRoles(1), MarcaController.actualizar)
+router.delete("/:id", authorizeRoles(1), MarcaController.eliminar)
 
 module.exports = router
