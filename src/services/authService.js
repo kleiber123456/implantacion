@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs")
 const jwt = require("jsonwebtoken")
 const UsuarioModel = require("../models/usuarioModel")
 const transporter = require("../config/nodemailer")
-const db = require("../config/db")
+const { pool, connect } = require("../config/db")
 
 function generarCodigo() {
   return Math.floor(100000 + Math.random() * 900000).toString() // 6 dígitos
@@ -27,8 +27,8 @@ const AuthService = {
       const rol = data.rol_id || 4 // Valor predeterminado: 2 (Cliente)
 
       // Insertar en usuario
-      const [usuarioResult] = await connection.query(
-        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      const usuarioResult = await connection.query(
+        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
         [
           data.nombre,
           data.apellido,
@@ -43,12 +43,12 @@ const AuthService = {
         ],
       )
 
-      const usuarioId = usuarioResult.insertId
+      const usuarioId = usuarioResult.rows[0].id
 
       // Si el rol es de cliente (ID 2)
       if (rol === 4) {
         await connection.query(
-          "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
           [
             usuarioId,
             data.nombre,
@@ -66,7 +66,7 @@ const AuthService = {
       // Si el rol es de mecánico (ID 3)
       if (rol === 3) {
         await connection.query(
-          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
           [
             usuarioId,
             data.nombre,
@@ -133,7 +133,11 @@ const AuthService = {
     const codigo = generarCodigo()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutos
 
-    await db.execute("INSERT INTO codigos (correo, codigo, expires_at) VALUES (?, ?, ?)", [correo, codigo, expiresAt])
+    await pool.query("INSERT INTO codigos (correo, codigo, expires_at) VALUES ($1, $2, $3)", [
+      correo,
+      codigo,
+      expiresAt,
+    ])
 
     // Enviar correo de recuperación de contraseña mejorado
     await transporter.sendMail({
@@ -170,16 +174,16 @@ const AuthService = {
   },
 
   async verificarCodigo(correo, codigo) {
-    const [rows] = await db.execute("SELECT * FROM codigos WHERE correo = ? AND codigo = ?", [correo, codigo])
+    const result = await pool.query("SELECT * FROM codigos WHERE correo = $1 AND codigo = $2", [correo, codigo])
 
-    if (rows.length === 0) throw new Error("Código inválido o ya usado")
+    if (result.rows.length === 0) throw new Error("Código inválido o ya usado")
 
-    const registro = rows[0]
+    const registro = result.rows[0]
     if (new Date() > new Date(registro.expires_at)) {
       throw new Error("El código ha expirado")
     }
 
-    await db.execute("DELETE FROM codigos WHERE id = ?", [registro.id])
+    await pool.query("DELETE FROM codigos WHERE id = $1", [registro.id])
     return true
   },
 
