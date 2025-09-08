@@ -3,13 +3,23 @@ const UsuarioService = require('../services/usuarioService');
 
 const UsuarioController = {
   async listar(req, res) {
-    const usuarios = await UsuarioService.listar();
-    res.json(usuarios);
+    try {
+      const usuarios = await UsuarioService.listar();
+      res.json(usuarios);
+    } catch (error) {
+      console.error('Error al listar usuarios:', error);
+      res.status(500).json({ error: 'Error al obtener la lista de usuarios.' });
+    }
   },
 
   async obtener(req, res) {
-    const usuario = await UsuarioService.obtener(req.params.id);
-    res.json(usuario);
+    try {
+      const usuario = await UsuarioService.obtener(req.params.id);
+      res.json(usuario);
+    } catch (error) {
+      console.error('Error al obtener usuario:', error);
+      res.status(500).json({ error: 'Error al obtener el usuario.' });
+    }
   },
 
   async crear(req, res) {
