@@ -19,7 +19,7 @@ const AuthService = {
   },
 
   async register(data) {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {

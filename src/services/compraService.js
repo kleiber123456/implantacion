@@ -16,7 +16,7 @@ const CompraService = {
   },
 
   crear: async (data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -98,7 +98,7 @@ const CompraService = {
   },
 
   actualizar: async (id, data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -192,7 +192,7 @@ const CompraService = {
   },
 
   eliminar: async (id) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -235,7 +235,7 @@ const CompraService = {
   },
 
   cambiarEstado: async (id) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {

@@ -42,7 +42,7 @@ const ClienteModel = {
   },
 
   create: async (data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -110,7 +110,7 @@ const ClienteModel = {
   },
 
   update: async (id, data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -149,7 +149,7 @@ const ClienteModel = {
   },
 
   delete: async (id) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -167,7 +167,7 @@ const ClienteModel = {
   },
 
   cambiarEstado: async (id, estado) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {

@@ -31,7 +31,7 @@ const VentaService = {
   obtenerPorRangoFechas: (fechaInicio, fechaFin) => VentaModel.findByDateRange(fechaInicio, fechaFin),
 
   crear: async (data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -238,7 +238,7 @@ const VentaService = {
   },
 
   actualizar: async (id, data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -472,7 +472,7 @@ const VentaService = {
   },
 
   eliminar: async (id) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -545,7 +545,7 @@ const VentaService = {
   },
 
   cambiarEstado: async (id, estadoId) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -639,7 +639,7 @@ const VentaService = {
 
   // Vincular venta existente con cita
   vincularConCita: async (ventaId, citaId, observaciones = null) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {

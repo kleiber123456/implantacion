@@ -38,7 +38,7 @@ const MecanicoModel = {
   },
 
   create: async (data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -138,7 +138,7 @@ const MecanicoModel = {
   },
 
   update: async (id, data) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -178,7 +178,7 @@ const MecanicoModel = {
   },
 
   delete: async (id) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
@@ -196,7 +196,7 @@ const MecanicoModel = {
   },
 
   cambiarEstado: async (id, estado) => {
-    const connection = await db.getConnection()
+    const connection = await connect()
     await connection.beginTransaction()
 
     try {
