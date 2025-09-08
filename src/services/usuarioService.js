@@ -9,7 +9,20 @@ const UsuarioService = {
   obtener: (id) => UsuarioModel.findById(id),
 
   crear: async (data) => {
-    const connection = await connect()
+    // Validar que el tipo de documento sea válido
+    const tiposValidos = [
+      "Cédula de ciudadanía",
+      "Tarjeta de identidad",
+      "Cédula de extranjería",
+      "Pasaporte",
+      "NIT",
+      "Otro",
+    ]
+    if (!tiposValidos.includes(data.tipo_documento)) {
+      throw new Error("Tipo de documento no válido")
+    }
+
+    const connection = await db.connect()
     await connection.beginTransaction()
 
     try {
@@ -18,8 +31,8 @@ const UsuarioService = {
       data.password = hashed
 
       // Crear usuario principal
-      const [usuarioResult] = await connection.query(
-        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      const usuarioResult = await connection.query(
+        "INSERT INTO usuario (nombre, apellido, correo, tipo_documento, documento, password, rol_id, telefono, direccion, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id",
         [
           data.nombre,
           data.apellido,
@@ -34,13 +47,13 @@ const UsuarioService = {
         ],
       )
 
-      const usuarioId = usuarioResult.insertId
+      const usuarioId = usuarioResult.rows[0].id
 
       // Crear registro en tabla específica según el rol
       if (rol === 4) {
         // Cliente
         await connection.query(
-          "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO cliente (id, nombre, apellido, direccion, tipo_documento, documento, correo, telefono, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
           [
             usuarioId,
             data.nombre,
@@ -58,7 +71,7 @@ const UsuarioService = {
       if (rol === 3) {
         // Mecánico
         await connection.query(
-          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO mecanico (id, nombre, apellido, tipo_documento, documento, direccion, telefono, telefono_emergencia, correo, estado) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
           [
             usuarioId,
             data.nombre,

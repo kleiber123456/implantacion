@@ -19,6 +19,19 @@ const AuthService = {
   },
 
   async register(data) {
+    // Validar que el tipo de documento sea válido
+    const tiposValidos = [
+      "Cédula de ciudadanía",
+      "Tarjeta de identidad",
+      "Cédula de extranjería",
+      "Pasaporte",
+      "NIT",
+      "Otro",
+    ]
+    if (!tiposValidos.includes(data.tipo_documento)) {
+      throw new Error("Tipo de documento no válido")
+    }
+
     const connection = await connect()
     await connection.beginTransaction()
 
