@@ -5,8 +5,8 @@ const db = require("../config/db")
 const transporter = require("../config/nodemailer")
 
 const UsuarioService = {
-  listar: () => UsuarioModel.findAll(),
-  obtener: (id) => UsuarioModel.findById(id),
+  listar: async () => await UsuarioModel.findAll(),
+  obtener: (id) => UsuarioModel.findById(id),
 
   crear: async (data) => {
     // Validar que el tipo de documento sea válido
